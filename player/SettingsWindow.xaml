@@ -1,0 +1,148 @@
+<Window x:Class="TrayTune.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки мини-плеера"
+        Width="400" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <Style x:Key="Section" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#FF9E9EB0"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <Style x:Key="Option" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#FFF0F0F6"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Margin" Value="0,0,16,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="Check" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#FFF0F0F6"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#FF4ADE80"/>
+            <Setter Property="Foreground" Value="#FF0E0E12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Width" Value="120"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" CornerRadius="8" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GhostButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#FFD8D8E4"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Width" Value="100"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" CornerRadius="8" Background="Transparent"
+                                BorderBrush="#33FFFFFF" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#18FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="14" Background="#FF17171E" BorderBrush="#33FFFFFF" BorderThickness="1"
+            MouseLeftButtonDown="Header_MouseLeftButtonDown">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="24" ShadowDepth="4" Direction="270" Opacity="0.5" Color="#FF000000"/>
+        </Border.Effect>
+
+        <StackPanel Margin="22,18,22,18">
+            <Grid Margin="0,0,0,16">
+                <TextBlock Text="Настройки" FontSize="16" FontWeight="SemiBold" Foreground="#FFF5F5FA"/>
+                <Button Content="✕" HorizontalAlignment="Right" Width="26" Height="26"
+                        Style="{StaticResource GhostButton}" Click="Cancel_Click" FontSize="11"/>
+            </Grid>
+
+            <TextBlock Text="ПОЛОЖЕНИЕ В ПАНЕЛИ ЗАДАЧ" Style="{StaticResource Section}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <RadioButton x:Name="PlacementLeft" Style="{StaticResource Option}" Content="Слева"
+                             GroupName="Placement" Checked="Placement_Checked"/>
+                <RadioButton x:Name="PlacementCenter" Style="{StaticResource Option}" Content="По центру"
+                             GroupName="Placement" Checked="Placement_Checked"/>
+                <RadioButton x:Name="PlacementRight" Style="{StaticResource Option}" Content="Справа"
+                             GroupName="Placement" Checked="Placement_Checked"/>
+            </StackPanel>
+
+            <TextBlock Text="ФОН" Style="{StaticResource Section}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <RadioButton x:Name="BgTransparent" Style="{StaticResource Option}" Content="Прозрачный"
+                             GroupName="Background" Checked="Background_Checked"/>
+                <RadioButton x:Name="BgTranslucent" Style="{StaticResource Option}" Content="Полупрозрачный"
+                             GroupName="Background" Checked="Background_Checked"/>
+                <RadioButton x:Name="BgSolid" Style="{StaticResource Option}" Content="Тёмный"
+                             GroupName="Background" Checked="Background_Checked"/>
+            </StackPanel>
+
+            <TextBlock Text="ЦВЕТ АКЦЕНТА" Style="{StaticResource Section}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <RadioButton x:Name="AccentAuto" Style="{StaticResource Option}" Content="Авто"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentSpotify" Style="{StaticResource Option}" Content="Spotify"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentYandex" Style="{StaticResource Option}" Content="Яндекс"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentWave" Style="{StaticResource Option}" Content="Волна"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentOther" Style="{StaticResource Option}" Content="Другой"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+            </StackPanel>
+
+            <TextBlock Text="ШИРИНА" Style="{StaticResource Section}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <RadioButton x:Name="WidthNarrow" Style="{StaticResource Option}" Content="Узкая"
+                             GroupName="Width" Checked="Width_Checked"/>
+                <RadioButton x:Name="WidthNormal" Style="{StaticResource Option}" Content="Обычная"
+                             GroupName="Width" Checked="Width_Checked"/>
+                <RadioButton x:Name="WidthWide" Style="{StaticResource Option}" Content="Широкая"
+                             GroupName="Width" Checked="Width_Checked"/>
+            </StackPanel>
+
+            <TextBlock Text="ПОВЕДЕНИЕ" Style="{StaticResource Section}"/>
+            <CheckBox x:Name="ShowProgressCheck" Style="{StaticResource Check}" Content="Показывать полосу прогресса"/>
+            <CheckBox x:Name="DockedCheck" Style="{StaticResource Check}" Content="Встроить в панель задач"/>
+            <CheckBox x:Name="AutostartCheck" Style="{StaticResource Check}" Content="Запускать при входе в Windows"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <Button Content="Отмена" Style="{StaticResource GhostButton}" Margin="0,0,10,0" Click="Cancel_Click"/>
+                <Button Content="Сохранить" Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

@@ -1,0 +1,34 @@
+# сборка
+bin/
+obj/
+dist/
+dist-portable/
+dist-release/
+[Tt]rayTune.exe
+*.old.exe
+[Tt]rayTune.pdb
+[Dd]ebug/
+[Rr]elease/
+
+# локальные кэши dotnet, чтобы не лезть в профиль
+.dotnet/
+.nuget/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# служебные скриншоты (в README попадают только docked.png и settings.png)
+shots/*.png
+!shots/docked.png
+shots/corner.png
+shots/hover.png
+
+# артефакты спайка
+spike/out-dump.txt
+spike/spike-out/
+
+# логи и прочее
+*.log
