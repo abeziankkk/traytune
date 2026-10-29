@@ -133,6 +133,13 @@ public partial class MainWindow : Window
         {
             OpenSettings();
         }
+
+        // Свернули в трей в прошлый раз — не показываем окно, пока не попросят.
+        var forceShow = args.Any(a => string.Equals(a, "--show", StringComparison.OrdinalIgnoreCase));
+        if (_settings.Hidden && !forceShow)
+        {
+            HideToTray(quiet: true);
+        }
     }
 
     // ------------------------------------------------------------- отрисовка
@@ -511,7 +518,7 @@ public partial class MainWindow : Window
         menu.Items.Add(new Separator());
 
         var hide = new MenuItem { Header = "Скрыть" };
-        hide.Click += (_, _) => Hide();
+        hide.Click += (_, _) => HideToTray();
         menu.Items.Add(hide);
 
         var exit = new MenuItem { Header = "Выход" };
@@ -605,11 +612,28 @@ public partial class MainWindow : Window
     private void ShowWidget()
     {
         Show();
+
+        if (_settings.Hidden)
+        {
+            _settings.Hidden = false;
+            SaveSettings();
+        }
+
         if (_docked) return;
 
         Activate();
         Topmost = false;
         Topmost = true;
+    }
+
+    /// <summary>Свернуть в трей и запомнить это состояние до следующего запуска.</summary>
+    private void HideToTray(bool quiet = false)
+    {
+        _settings.Hidden = true;
+        SaveSettings();
+        Hide();
+
+        if (!quiet) Notify("TrayTune свёрнут в трей");
     }
 
     private void SaveSettings()

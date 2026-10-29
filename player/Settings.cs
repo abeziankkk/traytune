@@ -52,6 +52,12 @@ public sealed class Settings
 
     public bool Autostart { get; set; }
 
+    /// <summary>
+    /// Виджет был свёрнут в трей. При следующем запуске не показываем окно,
+    /// пока пользователь сам не откроет его из трея.
+    /// </summary>
+    public bool Hidden { get; set; }
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
