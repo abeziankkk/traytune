@@ -52,7 +52,7 @@ internal static class TaskbarHost
         var scale = GetScale(tray);
 
         // Оставляем небольшой воздух сверху и снизу.
-        var heightPx = Math.Max(20, trayRect.Height - 10);
+        var heightPx = Math.Max(24, trayRect.Height - 6);
         var widthPx = Math.Max(160, (int)Math.Round(widthDip * scale));
         heightDip = heightPx / scale;
 
@@ -99,7 +99,7 @@ internal static class TaskbarHost
         if (!Native.GetWindowRect(tray, out var trayRect) || trayRect.Height <= 0) return;
 
         var scale = GetScale(tray);
-        var heightPx = Math.Max(20, trayRect.Height - 10);
+        var heightPx = Math.Max(24, trayRect.Height - 6);
         var widthPx = Math.Max(160, (int)Math.Round(window.Width * scale));
 
         var x = _placement switch
@@ -184,3 +184,4 @@ internal static class TaskbarHost
         return dpi <= 0 ? 1.0 : dpi / 96.0;
     }
 }
+

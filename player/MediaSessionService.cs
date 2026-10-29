@@ -19,6 +19,7 @@ public sealed class PlayerState
 {
     public bool HasSession { get; set; }
     public string Source { get; set; } = "";
+    public string SourceId { get; set; } = "";
     public string Title { get; set; } = "";
     public string Artist { get; set; } = "";
     public BitmapSource? Art { get; set; }
@@ -47,6 +48,8 @@ public sealed class MediaSessionService
     private TypedEventHandler<GlobalSystemMediaTransportControlsSession, TimelinePropertiesChangedEventArgs>? _timelineHandler;
 
     private string? _artKey;
+    private string? _artAttemptKey;
+    private DateTimeOffset _artAttemptAt;
     private TimeSpan _basePosition;
     private DateTimeOffset _stamp;
     private double _rate = 1;
@@ -88,6 +91,12 @@ public sealed class MediaSessionService
         SelectedAppId = appId;
         Rebind(appId);
     }
+
+    /// <summary>
+    /// Пинок извне. Браузеры редко присылают события о смене состояния,
+    /// поэтому окно само периодически просит перечитать сессию.
+    /// </summary>
+    public void RequestRefresh() => _ = RefreshAsync();
 
     /// <summary>Пересчитывает позицию между обновлениями SMTC (они приходят редко).</summary>
     public void Tick()
@@ -219,6 +228,7 @@ public sealed class MediaSessionService
 
             State.HasSession = true;
             State.Source = PrettyName(s.SourceAppUserModelId ?? "");
+            State.SourceId = s.SourceAppUserModelId ?? "";
             State.Title = props?.Title ?? "";
             State.Artist = props?.Artist ?? "";
             State.IsPlaying = _playing;
@@ -249,7 +259,16 @@ public sealed class MediaSessionService
     {
         var key = $"{props?.Title}|{props?.Artist}";
         if (string.Equals(key, _artKey, StringComparison.Ordinal)) return;
-        _artKey = key;
+
+        // Браузер часто отдаёт трек раньше, чем обложку. Пробуем повторно,
+        // но не чаще раза в 1.5 секунды, чтобы не дёргать SMTC на каждом тике.
+        if (string.Equals(key, _artAttemptKey, StringComparison.Ordinal) &&
+            DateTimeOffset.UtcNow - _artAttemptAt < TimeSpan.FromSeconds(1.5))
+        {
+            return;
+        }
+        _artAttemptKey = key;
+        _artAttemptAt = DateTimeOffset.UtcNow;
 
         if (props?.Thumbnail is null)
         {
@@ -278,7 +297,9 @@ public sealed class MediaSessionService
             image.StreamSource = new MemoryStream(bytes);
             image.EndInit();
             image.Freeze();
+
             State.Art = image;
+            _artKey = key;   // запоминаем только успех, иначе обложка больше не запросится
         }
         catch
         {

@@ -110,6 +110,30 @@
                              GroupName="Background" Checked="Background_Checked"/>
             </StackPanel>
 
+            <TextBlock Text="ЦВЕТ АКЦЕНТА" Style="{StaticResource Section}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <RadioButton x:Name="AccentAuto" Style="{StaticResource Option}" Content="Авто"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentSpotify" Style="{StaticResource Option}" Content="Spotify"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentYandex" Style="{StaticResource Option}" Content="Яндекс"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentWave" Style="{StaticResource Option}" Content="Волна"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+                <RadioButton x:Name="AccentOther" Style="{StaticResource Option}" Content="Другой"
+                             GroupName="Accent" Checked="Accent_Checked"/>
+            </StackPanel>
+
+            <TextBlock Text="ШИРИНА" Style="{StaticResource Section}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <RadioButton x:Name="WidthNarrow" Style="{StaticResource Option}" Content="Узкая"
+                             GroupName="Width" Checked="Width_Checked"/>
+                <RadioButton x:Name="WidthNormal" Style="{StaticResource Option}" Content="Обычная"
+                             GroupName="Width" Checked="Width_Checked"/>
+                <RadioButton x:Name="WidthWide" Style="{StaticResource Option}" Content="Широкая"
+                             GroupName="Width" Checked="Width_Checked"/>
+            </StackPanel>
+
             <TextBlock Text="ПОВЕДЕНИЕ" Style="{StaticResource Section}"/>
             <CheckBox x:Name="ShowProgressCheck" Style="{StaticResource Check}" Content="Показывать полосу прогресса"/>
             <CheckBox x:Name="DockedCheck" Style="{StaticResource Check}" Content="Встроить в панель задач"/>

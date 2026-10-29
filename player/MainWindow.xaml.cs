@@ -12,9 +12,9 @@ public partial class MainWindow : Window
 {
     private const string PlayGlyph = "\uE768";
     private const string PauseGlyph = "\uE769";
-    private const double WidgetWidth = 352;
-    private const double WidgetHeight = 88;
-    private const double DockedWidth = 300;
+    private const double WidgetWidth = 372;
+    private const double WidgetHeight = 96;
+    private const double DockedWidth = 340;
 
     private static readonly Brush SolidBackground = new SolidColorBrush(Color.FromArgb(0xF2, 0x18, 0x18, 0x20));
     private static readonly Brush TranslucentBackground = new SolidColorBrush(Color.FromArgb(0x59, 0x12, 0x12, 0x18));
@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private readonly Settings _settings = Settings.Load();
     private readonly DispatcherTimer _timer;
     private readonly DispatcherTimer _dockTimer;
+    private readonly DispatcherTimer _refreshTimer;
     private readonly DropShadowEffect _shadow;
 
     private WinForms.NotifyIcon? _tray;
@@ -51,6 +52,10 @@ public partial class MainWindow : Window
             _media.Tick();
             UpdateProgress();
         };
+
+        // Браузеры присылают события не всегда, поэтому раз в секунду перечитываем сессию сами.
+        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _refreshTimer.Tick += (_, _) => _media.RequestRefresh();
 
         // Панель задач могут перестроить (смена разрешения, обновление) — возвращаем окно на место.
         _dockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
@@ -80,6 +85,8 @@ public partial class MainWindow : Window
 
         _media.SelectedAppId = _settings.AppId ?? "";
         _timer.Start();
+        _refreshTimer.Start();
+        ListenForExternalCommands();
         Render();
 
         try
@@ -148,10 +155,22 @@ public partial class MainWindow : Window
         PrevButtonC.IsEnabled = st.HasSession;
         NextButtonC.IsEnabled = st.HasSession;
 
-        ToolTip = st.HasSession ? $"Источник: {st.Source}" : null;
+        ToolTip = st.HasSession && !_docked ? $"Источник: {st.Source}" : null;
 
+        ApplyAccent(st.SourceId);
         UpdateProgress();
         UpdateTrayText();
+    }
+
+    /// <summary>Цвет кнопки и прогресса: авто по источнику или выбранный вручную.</summary>
+    private void ApplyAccent(string sourceId)
+    {
+        var accent = Accents.Resolve(_settings.Accent, sourceId);
+
+        PlayButton.Background = accent;
+        PlayButtonC.Background = accent;
+        ProgressFill.Background = accent;
+        ProgressFillC.Background = accent;
     }
 
     private void UpdateProgress()
@@ -185,7 +204,8 @@ public partial class MainWindow : Window
 
         Root.Background = background switch
         {
-            WidgetBackground.Transparent => _hover ? HoverBackground : Brushes.Transparent,
+            // Внутри панели задач подсветку не рисуем: она читается как лишняя рамка.
+            WidgetBackground.Transparent => !_docked && _hover ? HoverBackground : Brushes.Transparent,
             WidgetBackground.Translucent => TranslucentBackground,
             _ => SolidBackground,
         };
@@ -232,9 +252,9 @@ public partial class MainWindow : Window
         _settings.Top = Top;
 
         ApplyCompactLayout(true);
-        Width = DockedWidth;
+        Width = _settings.WidgetWidth;
 
-        if (!TaskbarHost.TryAttach(this, DockedWidth, _settings.Placement, out var heightDip, out var info))
+        if (!TaskbarHost.TryAttach(this, _settings.WidgetWidth, _settings.Placement, out var heightDip, out var info))
         {
             ApplyCompactLayout(false);
             Width = WidgetWidth;
@@ -294,6 +314,7 @@ public partial class MainWindow : Window
             }
             else if (_docked)
             {
+                Width = _settings.WidgetWidth;
                 TaskbarHost.SetPlacement(this, _settings.Placement);
             }
         }
@@ -309,6 +330,36 @@ public partial class MainWindow : Window
     }
 
     // ------------------------------------------------------------- команды
+
+    /// <summary>
+    /// Второй запуск exe не создаёт второй виджет, а просит этот показать настройки.
+    /// Заодно удобно дергать из скриптов и хоткеев.
+    /// </summary>
+    private void ListenForExternalCommands()
+    {
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                using var signal = new EventWaitHandle(false, EventResetMode.AutoReset, App.ShowSettingsEventName);
+                while (true)
+                {
+                    if (!signal.WaitOne()) continue;
+                    Dispatcher.InvokeAsync(OpenSettings);
+                }
+            }
+            catch
+            {
+                // фоновый слушатель не критичен
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "TaskbarPlayer.SettingsListener",
+        };
+
+        thread.Start();
+    }
 
     private async void PlayButton_Click(object sender, RoutedEventArgs e)
     {
@@ -510,3 +561,4 @@ public partial class MainWindow : Window
         _settings.Save();
     }
 }
+

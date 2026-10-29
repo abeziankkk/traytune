@@ -38,7 +38,13 @@ public sealed class Settings
 
     public WidgetBackground Background { get; set; } = WidgetBackground.Transparent;
 
+    /// <summary>Цвет акцента: авто по источнику или выбранный вручную.</summary>
+    public AccentMode Accent { get; set; } = AccentMode.Auto;
+
     public bool ShowProgress { get; set; } = true;
+
+    /// <summary>Ширина встроенного виджета в DIP: 260 / 300 / 380.</summary>
+    public double WidgetWidth { get; set; } = 340;
 
     public bool Autostart { get; set; }
 
@@ -84,3 +90,4 @@ public sealed class Settings
         }
     }
 }
+

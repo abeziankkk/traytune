@@ -5,6 +5,9 @@ namespace TaskbarPlayer;
 
 public partial class App : Application
 {
+    /// <summary>Имя события, которым второй экземпляр просит показать настройки.</summary>
+    internal const string ShowSettingsEventName = "TaskbarPlayer.ShowSettings";
+
     private Mutex? _singleInstance;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -13,6 +16,20 @@ public partial class App : Application
         _singleInstance = new Mutex(true, "TaskbarPlayer.SingleInstance", out var isFirst);
         if (!isFirst)
         {
+            // Зато второй запуск умеет попросить уже работающую копию открыть настройки.
+            try
+            {
+                if (EventWaitHandle.TryOpenExisting(ShowSettingsEventName, out var signal))
+                {
+                    signal.Set();
+                    signal.Dispose();
+                }
+            }
+            catch
+            {
+                // не смогли — просто выходим
+            }
+
             Shutdown();
             return;
         }
