@@ -1,0 +1,198 @@
+<Window x:Class="TaskbarPlayer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Мини-плеер"
+        Width="352" Height="88"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False"
+        Topmost="True" WindowStartupLocation="Manual"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <!-- Круглая кнопка-иконка: hover/press через прозрачность, чтобы работало и на акцентной кнопке -->
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="26"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#FFE9E9F2"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" CornerRadius="13" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.72"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.28"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PlayButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Background" Value="#FF4ADE80"/>
+            <Setter Property="Foreground" Value="#FF0E0E12"/>
+        </Style>
+
+        <!-- Уменьшенные варианты для режима «внутри панели задач» -->
+        <Style x:Key="IconButtonSmall" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="FontSize" Value="9"/>
+        </Style>
+
+        <Style x:Key="PlayButtonSmall" TargetType="Button" BasedOn="{StaticResource PlayButton}">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="FontSize" Value="9"/>
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="Root"
+            CornerRadius="16"
+            Background="#F2181820"
+            BorderBrush="#26FFFFFF"
+            BorderThickness="1"
+            MouseLeftButtonDown="Root_MouseLeftButtonDown"
+            MouseRightButtonUp="Root_MouseRightButtonUp">
+        <Border.Effect>
+            <DropShadowEffect x:Name="RootShadow" BlurRadius="16" ShadowDepth="3" Direction="270" Opacity="0.45" Color="#FF000000"/>
+        </Border.Effect>
+
+        <Grid>
+            <!-- ================= Обычный виджет ================= -->
+            <Grid x:Name="FullView" Margin="10,9,8,9">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="54"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Width="54" Height="54" CornerRadius="9"
+                        Background="#FF26262F" VerticalAlignment="Center">
+                    <Border.Clip>
+                        <RectangleGeometry Rect="0,0,54,54" RadiusX="9" RadiusY="9"/>
+                    </Border.Clip>
+                    <Grid>
+                        <Image x:Name="CoverImage" Stretch="UniformToFill"/>
+                        <TextBlock x:Name="CoverPlaceholder" Text="♪"
+                                   FontFamily="Segoe UI" FontSize="24"
+                                   Foreground="#66FFFFFF"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock x:Name="TitleText" Grid.Row="0"
+                               Text="Ничего не играет"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="#FFF3F3F8"
+                               TextTrimming="CharacterEllipsis"/>
+
+                    <TextBlock x:Name="ArtistText" Grid.Row="1"
+                               Text="Spotify или Яндекс.Музыка"
+                               FontSize="11" Foreground="#FF9E9EB0"
+                               Margin="0,1,0,0"
+                               TextTrimming="CharacterEllipsis"/>
+
+                    <Grid x:Name="ProgressHost" Grid.Row="2" Height="12" Margin="0,4,0,0"
+                          Background="Transparent" Cursor="Hand"
+                          MouseLeftButtonDown="ProgressHost_MouseLeftButtonDown">
+                        <Border Height="3" CornerRadius="2" Background="#33FFFFFF" VerticalAlignment="Center"/>
+                        <Border x:Name="ProgressFill" Height="3" CornerRadius="2"
+                                Background="#FF4ADE80"
+                                HorizontalAlignment="Left" VerticalAlignment="Center" Width="0"/>
+                    </Grid>
+                </Grid>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="PrevButton" Style="{StaticResource IconButton}"
+                            Content="&#xE892;" Click="PrevButton_Click"/>
+                    <Button x:Name="PlayButton" Style="{StaticResource PlayButton}" Margin="4,0"
+                            Click="PlayButton_Click">
+                        <TextBlock x:Name="PlayPauseGlyph" Text="&#xE768;"/>
+                    </Button>
+                    <Button x:Name="NextButton" Style="{StaticResource IconButton}"
+                            Content="&#xE893;" Click="NextButton_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- ================= Режим внутри панели задач ================= -->
+            <Grid x:Name="CompactView" Visibility="Collapsed" Margin="6,2,6,2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="2"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="26"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Width="24" Height="24" CornerRadius="6"
+                        Background="#FF26262F" VerticalAlignment="Center">
+                    <Border.Clip>
+                        <RectangleGeometry Rect="0,0,24,24" RadiusX="6" RadiusY="6"/>
+                    </Border.Clip>
+                    <Grid>
+                        <Image x:Name="CoverImageC" Stretch="UniformToFill"/>
+                        <TextBlock x:Name="CoverPlaceholderC" Text="♪" FontFamily="Segoe UI" FontSize="13"
+                                   Foreground="#66FFFFFF"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="7,0,6,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleTextC" Text="Ничего не играет"
+                               FontSize="11" FontWeight="SemiBold" Foreground="#FFF3F3F8"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="ArtistTextC" Text="Spotify или Яндекс.Музыка"
+                               FontSize="9" Foreground="#FF9E9EB0" Margin="0,0,0,0"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="PrevButtonC" Style="{StaticResource IconButtonSmall}"
+                            Content="&#xE892;" Click="PrevButton_Click"/>
+                    <Button x:Name="PlayButtonC" Style="{StaticResource PlayButtonSmall}" Margin="2,0"
+                            Click="PlayButton_Click">
+                        <TextBlock x:Name="PlayPauseGlyphC" Text="&#xE768;"/>
+                    </Button>
+                    <Button x:Name="NextButtonC" Style="{StaticResource IconButtonSmall}"
+                            Content="&#xE893;" Click="NextButton_Click"/>
+                </StackPanel>
+
+                <Grid x:Name="ProgressHostC" Grid.Row="1" Grid.ColumnSpan="3" Margin="3,0,3,0"
+                      Background="Transparent" Cursor="Hand"
+                      MouseLeftButtonDown="ProgressHost_MouseLeftButtonDown">
+                    <Border Height="2" CornerRadius="1" Background="#22FFFFFF" VerticalAlignment="Center"/>
+                    <Border x:Name="ProgressFillC" Height="2" CornerRadius="1" Background="#FF4ADE80"
+                            HorizontalAlignment="Left" VerticalAlignment="Center" Width="0"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

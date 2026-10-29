@@ -1,0 +1,28 @@
+# сборка
+bin/
+obj/
+dist/
+[Dd]ebug/
+[Rr]elease/
+
+# локальные кэши dotnet, чтобы не лезть в профиль
+.dotnet/
+.nuget/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# служебные скриншоты (в README попадают только docked.png и settings.png)
+shots/full.png
+shots/corner.png
+shots/hover.png
+
+# артефакты спайка
+spike/out-dump.txt
+spike/spike-out/
+
+# логи и прочее
+*.log
