@@ -4,6 +4,7 @@ obj/
 dist/
 dist-portable/
 [Tt]rayTune.exe
+*.old.exe
 [Tt]rayTune.pdb
 [Dd]ebug/
 [Rr]elease/
