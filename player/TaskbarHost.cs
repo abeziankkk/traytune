@@ -247,7 +247,8 @@ internal static class TaskbarHost
         var x = ComputeScreenX(tray, trayRect, widthPx, _placement, out _leftX);
         var y = trayRect.Top + (trayRect.Height - heightPx) / 2;
 
-        const uint flags = Native.SWP_NOACTIVATE | Native.SWP_NOZORDER;
+        // Без SWP_NOZORDER: переустанавливаем окно поверх панели, иначе клики уходят в неё.
+        const uint flags = Native.SWP_NOACTIVATE | Native.SWP_SHOWWINDOW;
         Native.SetWindowPos(hwnd, Native.HWND_TOPMOST, x, y, widthPx, heightPx, flags);
     }
 

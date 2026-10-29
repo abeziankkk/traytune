@@ -30,8 +30,12 @@ public sealed class Settings
     public double? Top { get; set; }
     public string? AppId { get; set; }
 
-    /// <summary>Режим «внутри панели задач».</summary>
-    public bool Docked { get; set; }
+    /// <summary>
+    /// Плавающий виджет вместо встроенного. По умолчанию false — приложение
+    /// сразу встаёт в панель задач. Старое поле "Docked" из прежних версий
+    /// игнорируется, поэтому у всех после обновления включается встроенный режим.
+    /// </summary>
+    public bool Floating { get; set; }
 
     /// <summary>Где в панели задач стоять.</summary>
     public TaskbarPlacement Placement { get; set; } = TaskbarPlacement.Left;

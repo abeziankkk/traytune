@@ -16,6 +16,8 @@ public partial class MainWindow : Window
     private const double WidgetHeight = 96;
     private const double DockedWidth = 340;
 
+    // alpha=1: визуально прозрачно, но клики не проваливаются в панель задач (layered-окно).
+    private static readonly Brush InvisibleBackground = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
     private static readonly Brush SolidBackground = new SolidColorBrush(Color.FromArgb(0xF2, 0x18, 0x18, 0x20));
     private static readonly Brush TranslucentBackground = new SolidColorBrush(Color.FromArgb(0x59, 0x12, 0x12, 0x18));
     private static readonly Brush HoverBackground = new SolidColorBrush(Color.FromArgb(0x2A, 0xFF, 0xFF, 0xFF));
@@ -91,6 +93,15 @@ public partial class MainWindow : Window
         ApplyLook();
         BuildTray();
 
+        if (IntegrityLevel.IsLow())
+        {
+            Log.Write("started at low integrity: docking and tray icon will not work");
+            MessageBox.Show(
+                "TrayTune запущен с ограниченными правами (низкий уровень целостности).`n`n" +
+                "В этом режиме Windows не разрешает встроить окно в панель задач и не показывает значок в трее.`n`n" +
+                "Запусти TrayTune.exe обычным двойным кликом из проводника.",
+                "TrayTune", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
         _media.SelectedAppId = _settings.AppId ?? "";
         _timer.Start();
         _refreshTimer.Start();
@@ -110,7 +121,7 @@ public partial class MainWindow : Window
         Render();
 
         var args = Environment.GetCommandLineArgs();
-        var wantDock = _settings.Docked || args.Any(a => string.Equals(a, "--dock", StringComparison.OrdinalIgnoreCase));
+        var wantDock = !_settings.Floating || args.Any(a => string.Equals(a, "--dock", StringComparison.OrdinalIgnoreCase));
         if (wantDock) SetDocked(true);
 
         if (args.Any(a => string.Equals(a, "--undock", StringComparison.OrdinalIgnoreCase)))
@@ -213,7 +224,7 @@ public partial class MainWindow : Window
         Root.Background = background switch
         {
             // Внутри панели задач подсветку не рисуем: она читается как лишняя рамка.
-            WidgetBackground.Transparent => !_docked && _hover ? HoverBackground : Brushes.Transparent,
+            WidgetBackground.Transparent => !_docked && _hover ? HoverBackground : InvisibleBackground,
             WidgetBackground.Translucent => TranslucentBackground,
             _ => SolidBackground,
         };
@@ -250,7 +261,7 @@ public partial class MainWindow : Window
             Height = WidgetHeight;
             Topmost = true;
             PlaceWindow();   // вернёт на позицию, сохранённую до стыковки
-            _settings.Docked = false;
+            _settings.Floating = true;
             SaveSettings();
             ApplyLook();
             if (note is not null) Notify(note);
@@ -274,7 +285,7 @@ public partial class MainWindow : Window
             _dockTimer.Start();
             TaskbarHost.Reposition(this);
 
-            _settings.Docked = true;
+            _settings.Floating = false;
             SaveSettings();
             ApplyLook();
 
@@ -291,7 +302,7 @@ public partial class MainWindow : Window
             _dockTimer.Start();
             TaskbarHost.RepositionOverlay(this);
 
-            _settings.Docked = true;
+            _settings.Floating = false;
             SaveSettings();
             ApplyLook();
 
@@ -340,9 +351,10 @@ public partial class MainWindow : Window
             Autostart.Set(_settings.Autostart);
             ApplyLook();
 
-            if (_settings.Docked != _docked)
+            var desiredDocked = !_settings.Floating;
+            if (desiredDocked != _docked)
             {
-                SetDocked(_settings.Docked);
+                SetDocked(desiredDocked);
             }
             else if (_docked)
             {
@@ -596,7 +608,7 @@ public partial class MainWindow : Window
         }
 
         _settings.AppId = _media.SelectedAppId;
-        _settings.Docked = _docked;
+        _settings.Floating = !_docked;
         _settings.Save();
     }
 }

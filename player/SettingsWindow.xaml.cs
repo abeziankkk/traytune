@@ -37,7 +37,7 @@ public partial class SettingsWindow : Window
         WidthWide.IsChecked = _draft.WidgetWidth >= 380;
 
         ShowProgressCheck.IsChecked = _draft.ShowProgress;
-        DockedCheck.IsChecked = _draft.Docked;
+        DockedCheck.IsChecked = !_draft.Floating;
         AutostartCheck.IsChecked = _draft.Autostart;
 
         _loading = false;
@@ -95,7 +95,7 @@ public partial class SettingsWindow : Window
         _settings.Accent = _draft.Accent;
         _settings.WidgetWidth = _draft.WidgetWidth;
         _settings.ShowProgress = ShowProgressCheck.IsChecked == true;
-        _settings.Docked = DockedCheck.IsChecked == true;
+        _settings.Floating = DockedCheck.IsChecked != true;
         _settings.Autostart = AutostartCheck.IsChecked == true;
         _settings.Save();
 
