@@ -20,7 +20,8 @@ dist-portable/
 *.suo
 
 # служебные скриншоты (в README попадают только docked.png и settings.png)
-shots/full.png
+shots/*.png
+!shots/docked.png
 shots/corner.png
 shots/hover.png
 
