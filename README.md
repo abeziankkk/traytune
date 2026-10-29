@@ -68,9 +68,10 @@ build-release.cmd
 build-portable.cmd
 ```
 
-`build-release.cmd` — `dist\TrayTune.exe`, один файл, ~25 МБ, требует
-установленный .NET 10. `build-portable.cmd` — self-contained версия в
-`dist-portable`, ~70 МБ, .NET на машине не нужен: скопировал exe и запустил.
+`build-release.cmd` собирает `TrayTune.exe` **прямо в папке проекта** (копия
+ещё кладётся в `dist`), один файл, ~25 МБ, требует установленный .NET 10.
+`build-portable.cmd` — self-contained версия в `dist-portable`, ~70 МБ: .NET на
+машине не нужен, скопировал exe и запустил.
 
 Вручную:
 

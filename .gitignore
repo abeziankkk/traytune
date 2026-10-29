@@ -3,6 +3,8 @@ bin/
 obj/
 dist/
 dist-portable/
+[Tt]rayTune.exe
+[Tt]rayTune.pdb
 [Dd]ebug/
 [Rr]elease/
 
