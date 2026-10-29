@@ -23,6 +23,7 @@ internal static class Native
     public const uint SWP_SHOWWINDOW = 0x0040;
 
     public static readonly IntPtr HWND_TOP = IntPtr.Zero;
+    public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
 
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT

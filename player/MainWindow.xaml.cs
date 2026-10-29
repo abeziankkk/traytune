@@ -31,6 +31,7 @@ public partial class MainWindow : Window
     private WinForms.NotifyIcon? _tray;
     private bool _initialized;
     private bool _docked;
+    private bool _overlayMode;
     private bool _hover;
 
     public MainWindow()
@@ -62,6 +63,13 @@ public partial class MainWindow : Window
         _dockTimer.Tick += (_, _) =>
         {
             if (!_docked) return;
+
+            if (_overlayMode)
+            {
+                // Режим совместимости: окно живёт само, просто держим его на полосе панели.
+                TaskbarHost.RepositionOverlay(this);
+                return;
+            }
 
             if (!TaskbarHost.IsAttached(this))
             {
@@ -233,11 +241,14 @@ public partial class MainWindow : Window
         {
             _dockTimer.Stop();
             TaskbarHost.Detach(this);
+            TaskbarHost.ClearOverlay();
+            _overlayMode = false;
 
             _docked = false;
             ApplyCompactLayout(false);
             Width = WidgetWidth;
             Height = WidgetHeight;
+            Topmost = true;
             PlaceWindow();   // вернёт на позицию, сохранённую до стыковки
             _settings.Docked = false;
             SaveSettings();
@@ -254,27 +265,46 @@ public partial class MainWindow : Window
         ApplyCompactLayout(true);
         Width = _settings.WidgetWidth;
 
-        if (!TaskbarHost.TryAttach(this, _settings.WidgetWidth, _settings.Placement, out var heightDip, out var info))
+        // 1) Пробуем настоящее встраивание в панель задач.
+        if (TaskbarHost.TryAttach(this, _settings.WidgetWidth, _settings.Placement, out var heightDip, out var info))
         {
-            ApplyCompactLayout(false);
-            Width = WidgetWidth;
-            Height = WidgetHeight;
-            PlaceWindow();
+            Height = heightDip;
+            _docked = true;
+            _overlayMode = false;
+            _dockTimer.Start();
+            TaskbarHost.Reposition(this);
+
+            _settings.Docked = true;
+            SaveSettings();
             ApplyLook();
-            Notify($"Не удалось встроить: {info}");
+
+            if (note is not null) Notify(note);
             return;
         }
 
-        Height = heightDip;
-        _docked = true;
-        _dockTimer.Start();
-        TaskbarHost.Reposition(this);
+        // 2) Система запретила SetParent — встаём поверх полосы панели задач.
+        if (TaskbarHost.TryOverlay(this, _settings.WidgetWidth, _settings.Placement, out var overlayHeight, out _))
+        {
+            Height = overlayHeight;
+            _docked = true;
+            _overlayMode = true;
+            _dockTimer.Start();
+            TaskbarHost.RepositionOverlay(this);
 
-        _settings.Docked = true;
-        SaveSettings();
+            _settings.Docked = true;
+            SaveSettings();
+            ApplyLook();
+
+            Notify("Панель задач не отдала окно — виджет поставлен поверх неё (режим совместимости)");
+            return;
+        }
+
+        ApplyCompactLayout(false);
+        Width = WidgetWidth;
+        Height = WidgetHeight;
+        PlaceWindow();
         ApplyLook();
-
-        if (note is not null) Notify(note);
+        Notify($"Не удалось встроить: {info}");
     }
 
     private void ApplyCompactLayout(bool compact)

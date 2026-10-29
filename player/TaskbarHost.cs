@@ -23,6 +23,7 @@ internal static class TaskbarHost
 
     private static TaskbarPlacement _placement = TaskbarPlacement.Left;
     private static int _leftX = EdgeMargin;
+    private static bool _overlay;
 
     public static bool TryAttach(Window window, double widthDip, TaskbarPlacement placement,
         out double heightDip, out string info)
@@ -197,6 +198,75 @@ internal static class TaskbarHost
         }
 
         return EdgeMargin;
+    }
+
+    /// <summary>
+    /// Фолбэк, если система не разрешает SetParent (бывает после обновлений и в
+    /// защищённых сессиях). Окно остаётся обычным, но ставится ровно на полосу
+    /// панели задач и держится поверх — визуально то же самое.
+    /// </summary>
+    public static bool TryOverlay(Window window, double widthDip, TaskbarPlacement placement,
+        out double heightDip, out string info)
+    {
+        heightDip = 38;
+        info = "";
+
+        var hwnd = new WindowInteropHelper(window).Handle;
+        var tray = Native.FindWindow(TrayClass, null);
+        if (hwnd == IntPtr.Zero || tray == IntPtr.Zero) return false;
+        if (!Native.GetWindowRect(tray, out var trayRect) || trayRect.Height <= 0) return false;
+
+        var scale = GetScale(tray);
+        var heightPx = Math.Max(24, trayRect.Height - 6);
+        var widthPx = Math.Max(160, (int)Math.Round(widthDip * scale));
+        heightDip = heightPx / scale;
+
+        var x = ComputeScreenX(tray, trayRect, widthPx, placement, out _leftX);
+        var y = trayRect.Top + (trayRect.Height - heightPx) / 2;
+
+        _placement = placement;
+        _overlay = true;
+
+        const uint flags = Native.SWP_NOACTIVATE | Native.SWP_SHOWWINDOW;
+        Native.SetWindowPos(hwnd, Native.HWND_TOPMOST, x, y, widthPx, heightPx, flags);
+        info = "overlay";
+        return true;
+    }
+
+    /// <summary>Держит окно на полосе панели задач, если панель переехала.</summary>
+    public static void RepositionOverlay(Window window)
+    {
+        var hwnd = new WindowInteropHelper(window).Handle;
+        var tray = Native.FindWindow(TrayClass, null);
+        if (hwnd == IntPtr.Zero || tray == IntPtr.Zero) return;
+        if (!Native.GetWindowRect(tray, out var trayRect) || trayRect.Height <= 0) return;
+
+        var scale = GetScale(tray);
+        var heightPx = Math.Max(24, trayRect.Height - 6);
+        var widthPx = Math.Max(160, (int)Math.Round(window.Width * scale));
+        var x = ComputeScreenX(tray, trayRect, widthPx, _placement, out _leftX);
+        var y = trayRect.Top + (trayRect.Height - heightPx) / 2;
+
+        const uint flags = Native.SWP_NOACTIVATE | Native.SWP_NOZORDER;
+        Native.SetWindowPos(hwnd, Native.HWND_TOPMOST, x, y, widthPx, heightPx, flags);
+    }
+
+    /// <summary>Кто-то другой перекрасил окно в обычное — значит оверлей больше не нужен.</summary>
+    public static void ClearOverlay() => _overlay = false;
+
+    public static bool IsOverlay => _overlay;
+
+    private static int ComputeScreenX(IntPtr tray, Native.RECT trayRect, int widthPx,
+        TaskbarPlacement placement, out int leftX)
+    {
+        leftX = ComputeLeftX(tray, trayRect, widthPx, placement);
+
+        return placement switch
+        {
+            TaskbarPlacement.Left => trayRect.Left + leftX,
+            TaskbarPlacement.Center => trayRect.Left + (trayRect.Width - widthPx) / 2,
+            _ => RightEdge(tray, trayRect) - widthPx,
+        };
     }
 
     private static int RightEdge(IntPtr tray, Native.RECT trayRect)
