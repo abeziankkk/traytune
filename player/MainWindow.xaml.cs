@@ -544,12 +544,22 @@ public partial class MainWindow : Window
 
     private void BuildTray()
     {
-        _tray = new WinForms.NotifyIcon
+        try
         {
-            Icon = LoadTrayIcon(),
-            Text = "Мини-плеер",
-            Visible = true,
-        };
+            Log.Write($"tray: creating, exe={Environment.ProcessPath}");
+            _tray = new WinForms.NotifyIcon
+            {
+                Icon = LoadTrayIcon(),
+                Text = "TrayTune",
+                Visible = true,
+            };
+            Log.Write($"tray: created visible={_tray.Visible} icon={(_tray.Icon is null ? "null" : _tray.Icon.Width + "x" + _tray.Icon.Height)}");
+        }
+        catch (Exception ex)
+        {
+            Log.Write("tray: create failed: " + ex);
+            return;
+        }
 
         var menu = new WinForms.ContextMenuStrip();
         menu.Items.Add("Показать", null, (_, _) => ShowWidget());
@@ -558,12 +568,17 @@ public partial class MainWindow : Window
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add("Выход", null, (_, _) => Close());
 
-        // Windows 11 по умолчанию прячет новые значки: пробуем «продвинуть» свой.
-        // Запись в реестре появляется не мгновенно, поэтому пробуем дважды.
-        TrayPromoter.TryPromote();
+        // Windows 11 прячет новые значки, а запись в реестре Explorer создаёт не сразу,
+        // поэтому пробуем несколько раз с интервалом.
+        var attempts = 0;
         var promoteTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        promoteTimer.Tick += (_, _) => { promoteTimer.Stop(); TrayPromoter.TryPromote(); };
+        promoteTimer.Tick += (_, _) =>
+        {
+            attempts++;
+            if (TrayPromoter.TryPromote() || attempts >= 5) promoteTimer.Stop();
+        };
         promoteTimer.Start();
+        TrayPromoter.TryPromote();
 
         _tray.ContextMenuStrip = menu;
         _tray.DoubleClick += (_, _) => ShowWidget();
