@@ -4,10 +4,10 @@ set "ROOT=%~dp0"
 set "OUT=%ROOT%dist"
 
 echo [1/2] publish...
-dotnet publish "%ROOT%player\TaskbarPlayer.csproj" -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o "%OUT%" --nologo
+dotnet publish "%ROOT%player\TrayTune.csproj" -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o "%OUT%" --nologo
 if errorlevel 1 goto :err
 
-echo [2/2] done: %OUT%\TaskbarPlayer.exe
+echo [2/2] done: %OUT%\TrayTune.exe
 exit /b 0
 
 :err

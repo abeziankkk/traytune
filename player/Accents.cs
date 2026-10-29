@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 public enum AccentMode
 {

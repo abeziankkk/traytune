@@ -1,7 +1,7 @@
 # Bring a window of the given process (optionally the one with a given width) to front.
 # ASCII-only: PowerShell 5.1 reads scripts as ANSI.
 param(
-    [string]$ProcessName = "TaskbarPlayer",
+    [string]$ProcessName = "TrayTune",
     [int]$Width = 0
 )
 

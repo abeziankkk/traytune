@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 internal static class Native
 {
@@ -67,6 +67,9 @@ internal static class Native
 
     [DllImport("user32.dll")]
     public static extern uint GetDpiForWindow(IntPtr hWnd);
+
+    /// <summary>Разбирает данные, но нужен для диагностики встраивания.</summary>
+    public static long GetStyleValue(IntPtr hwnd) => GetWindowLongPtr(hwnd, GWL_STYLE).ToInt64();
 
     /// <summary>
     /// Убирает окно из Alt-Tab и запрещает ему забирать фокус клавиатуры:

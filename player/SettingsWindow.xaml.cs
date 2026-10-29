@@ -1,7 +1,7 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Input;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 public partial class SettingsWindow : Window
 {

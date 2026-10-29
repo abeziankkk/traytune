@@ -6,7 +6,7 @@ using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using WinForms = System.Windows.Forms;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 public partial class MainWindow : Window
 {
@@ -286,9 +286,11 @@ public partial class MainWindow : Window
 
     private void Notify(string text)
     {
-        try { _tray?.ShowBalloonTip(2500, "Мини-плеер", text, WinForms.ToolTipIcon.Info); }
+        try { _tray?.ShowBalloonTip(2500, "TrayTune", text, WinForms.ToolTipIcon.Info); }
         catch { /* не критично */ }
     }
+
+    /// <summary>Простой файловый лог: всплывающие подсказки живут пару секунд, причину надо разбирать.</summary>
 
     // ------------------------------------------------------------- настройки
 
@@ -355,7 +357,7 @@ public partial class MainWindow : Window
         })
         {
             IsBackground = true,
-            Name = "TaskbarPlayer.SettingsListener",
+            Name = "TrayTune.SettingsListener",
         };
 
         thread.Start();

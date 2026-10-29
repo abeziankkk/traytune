@@ -53,9 +53,10 @@ foreach (var cls in new[] { "TrayNotifyWnd", "MSTaskSwWClass", "ReBarWindow32", 
     if (child != IntPtr.Zero) parents.Add((cls, child));
 }
 
+var ExtraExStyle = args.Length > 1 ? Convert.ToUInt32(args[1], 16) : 0u;
 foreach (var (name, handle) in parents)
 {
-    var hwnd = CreateWindowExW(WS_EX_LAYERED | WS_EX_TOOLWINDOW, "ParentTestWindow", "test",
+    var hwnd = CreateWindowExW(WS_EX_LAYERED | WS_EX_TOOLWINDOW | ExtraExStyle, "ParentTestWindow", "test",
         WS_POPUP | WS_VISIBLE, 100, 100, 200, 40, IntPtr.Zero, IntPtr.Zero, GetModuleHandleW(null), IntPtr.Zero);
 
     if (hwnd == IntPtr.Zero)

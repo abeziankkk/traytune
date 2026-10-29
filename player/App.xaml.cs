@@ -1,19 +1,19 @@
 using System.IO;
 using System.Windows;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 public partial class App : Application
 {
     /// <summary>Имя события, которым второй экземпляр просит показать настройки.</summary>
-    internal const string ShowSettingsEventName = "TaskbarPlayer.ShowSettings";
+    internal const string ShowSettingsEventName = "TrayTune.ShowSettings";
 
     private Mutex? _singleInstance;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         // Второй экземпляр не нужен: два виджета и две иконки в трее.
-        _singleInstance = new Mutex(true, "TaskbarPlayer.SingleInstance", out var isFirst);
+        _singleInstance = new Mutex(true, "TrayTune.SingleInstance", out var isFirst);
         if (!isFirst)
         {
             // Зато второй запуск умеет попросить уже работающую копию открыть настройки.
@@ -49,7 +49,7 @@ public partial class App : Application
         if (e is null) return;
         try
         {
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TaskbarPlayer");
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TrayTune");
             Directory.CreateDirectory(dir);
             File.AppendAllText(Path.Combine(dir, "error.log"), $"{DateTime.Now:u}  {e}{Environment.NewLine}{Environment.NewLine}");
         }

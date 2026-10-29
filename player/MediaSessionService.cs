@@ -4,7 +4,7 @@ using Windows.Foundation;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 /// <summary>Одна медиасессия Windows: приложение, которое сейчас что-то публикует.</summary>
 public sealed class SessionEntry

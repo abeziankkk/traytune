@@ -1,7 +1,7 @@
 # Проверка клика по встроенному виджету: находим дочернее окно нашего процесса
 # внутри Shell_TrayWnd и посылаем WM_LBUTTONDOWN/UP в заданную точку.
 param(
-    [string]$ProcessName = "TaskbarPlayer",
+    [string]$ProcessName = "TrayTune",
     [int]$ClientX = 261,
     [int]$ClientY = 19,
     [switch]$List

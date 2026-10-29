@@ -8,8 +8,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <RootNamespace>TaskbarPlayer</RootNamespace>
-    <AssemblyName>TaskbarPlayer</AssemblyName>
+    <RootNamespace>TrayTune</RootNamespace>
+    <AssemblyName>TrayTune</AssemblyName>
     <PlatformTarget>x64</PlatformTarget>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>

@@ -2,7 +2,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 public enum TaskbarPlacement
 {
@@ -23,7 +23,7 @@ public enum WidgetBackground
     Solid,
 }
 
-/// <summary>Настройки. Лежат в %LOCALAPPDATA%\TaskbarPlayer\settings.json.</summary>
+/// <summary>Настройки. Лежат в %LOCALAPPDATA%\TrayTune\settings.json.</summary>
 public sealed class Settings
 {
     public double? Left { get; set; }
@@ -55,7 +55,7 @@ public sealed class Settings
     };
 
     private static string Folder => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TaskbarPlayer");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TrayTune");
 
     public static string FilePath => Path.Combine(Folder, "settings.json");
 

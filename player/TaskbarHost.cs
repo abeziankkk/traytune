@@ -1,7 +1,8 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 /// <summary>
 /// Экспериментальный режим: окно становится дочерним для Shell_TrayWnd,
@@ -70,17 +71,27 @@ internal static class TaskbarHost
         var client = new Native.POINT { X = x, Y = y };
         Native.ScreenToClient(tray, ref client);
 
+        var hwndStyleBefore = Native.GetStyleValue(hwnd);
+        var parentBefore = Native.GetParent(hwnd);
         Native.SetParent(hwnd, tray);
+        var setParentError = Marshal.GetLastWin32Error();
+
         Native.SetChildStyle(hwnd, true);
+        var hwndStyleAfter = Native.GetStyleValue(hwnd);
 
         const uint flags = Native.SWP_NOACTIVATE | Native.SWP_FRAMECHANGED | Native.SWP_SHOWWINDOW;
         Native.SetWindowPos(hwnd, Native.HWND_TOP, client.X, client.Y, widthPx, heightPx, flags);
 
-        if (Native.GetParent(hwnd) != tray)
+        var parentAfter = Native.GetParent(hwnd);
+        Log.Write($"attach: hwnd=0x{hwnd:X} tray=0x{tray:X} parentBefore=0x{parentBefore:X} " +
+                  $"styleBefore=0x{hwndStyleBefore:X8} styleAfter=0x{hwndStyleAfter:X8} " +
+                  $"err={setParentError} parentAfter=0x{parentAfter:X}");
+
+        if (parentAfter != tray)
         {
             Native.SetParent(hwnd, IntPtr.Zero);
             Native.SetChildStyle(hwnd, false);
-            info = "окно не стало дочерним";
+            info = $"окно не стало дочерним (parent=0x{parentAfter:X}, err={setParentError})";
             return false;
         }
 
@@ -157,11 +168,32 @@ internal static class TaskbarHost
     {
         if (placement != TaskbarPlacement.Left) return EdgeMargin;
 
-        // Слева стоит кнопка «Пуск» — если виджет в неё упрётся, сдвигаем за значки приложений.
-        var block = TaskbarLayout.GetButtonBlock(tray);
-        if (block is { } b && b.Left < EdgeMargin + widthPx + 16)
+        // UI Automation иногда отвечает секундами или подвисает — даём ему таймаут.
+        TaskbarLayout.ButtonBlock? block = null;
+        try
         {
-            return Math.Max(EdgeMargin, b.Right + EdgeMargin);
+            var probe = Task.Run(() => TaskbarLayout.GetButtonBlock(tray));
+            if (probe.Wait(TimeSpan.FromMilliseconds(400))) block = probe.Result;
+        }
+        catch
+        {
+            block = null;
+        }
+
+        if (block is { } b)
+        {
+            // Если виджет упирается в «Пуск» или значки — сдвигаем за них.
+            return b.Left < EdgeMargin + widthPx + 16
+                ? Math.Max(EdgeMargin, b.Right + EdgeMargin)
+                : EdgeMargin;
+        }
+
+        // Фолбэк без UIA: не наезжаем хотя бы на кнопку «Пуск».
+        var start = Native.FindWindowEx(tray, IntPtr.Zero, "Start", null);
+        if (start != IntPtr.Zero && Native.GetWindowRect(start, out var startRect) &&
+            startRect.Left < EdgeMargin + widthPx + 16)
+        {
+            return Math.Max(EdgeMargin, startRect.Right + EdgeMargin);
         }
 
         return EdgeMargin;

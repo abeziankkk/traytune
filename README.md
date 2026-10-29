@@ -1,4 +1,4 @@
-# Taskbar Player
+# TrayTune
 
 Мини-плеер прямо в панели задач Windows 11: обложка, трек, play/pause, перемотка.
 Работает со Spotify, Яндекс.Музыкой в браузере и любым другим плеером — без их API.
@@ -55,7 +55,7 @@ the system media session (SMTC) — no Spotify/Yandex API keys needed.*
 
 ## Запуск
 
-1. Скачать `TaskbarPlayer.exe` из [Releases](../../releases) или собрать самому.
+1. Скачать `TrayTune.exe` из [Releases](../../releases) или собрать самому.
 2. Запустить. Правый клик по виджету (или иконка в трее) → **Настройки**.
 
 Горячие клавиши не нужны: мультимедийные клавиши клавиатуры работают через саму
@@ -68,20 +68,20 @@ build-release.cmd
 build-portable.cmd
 ```
 
-`build-release.cmd` — `dist\TaskbarPlayer.exe`, один файл, ~25 МБ, требует
+`build-release.cmd` — `dist\TrayTune.exe`, один файл, ~25 МБ, требует
 установленный .NET 10. `build-portable.cmd` — self-contained версия в
 `dist-portable`, ~70 МБ, .NET на машине не нужен: скопировал exe и запустил.
 
 Вручную:
 
 ```bash
-dotnet publish player/TaskbarPlayer.csproj -c Release -r win-x64 \
+dotnet publish player/TrayTune.csproj -c Release -r win-x64 \
   --self-contained false -p:PublishSingleFile=true -o dist
 ```
 
 ## Настройки
 
-Хранятся в `%LOCALAPPDATA%\TaskbarPlayer\settings.json`:
+Хранятся в `%LOCALAPPDATA%\TrayTune\settings.json`:
 
 | Параметр | Значения | По умолчанию |
 |---|---|---|

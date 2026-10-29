@@ -1,13 +1,13 @@
 using System.IO;
 using Microsoft.Win32;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 /// <summary>Автозапуск через HKCU\...\Run — без прав администратора и без задач в планировщике.</summary>
 internal static class Autostart
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "TaskbarPlayer";
+    private const string ValueName = "TrayTune";
 
     public static bool IsEnabled()
     {

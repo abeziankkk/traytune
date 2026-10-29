@@ -1,5 +1,5 @@
 # Где находится окно процесса: top-level список + состояние.
-param([string]$ProcessName = "TaskbarPlayer")
+param([string]$ProcessName = "TrayTune")
 
 Add-Type -Namespace W3 -Name U3 -MemberDefinition @'
 [DllImport("user32.dll")] public static extern IntPtr GetDesktopWindow();

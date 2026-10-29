@@ -5,10 +5,10 @@ set "ROOT=%~dp0"
 set "OUT=%ROOT%dist-portable"
 
 echo [1/2] publish self-contained...
-dotnet publish "%ROOT%player\TaskbarPlayer.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "%OUT%" --nologo
+dotnet publish "%ROOT%player\TrayTune.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "%OUT%" --nologo
 if errorlevel 1 goto :err
 
-echo [2/2] done: %OUT%\TaskbarPlayer.exe
+echo [2/2] done: %OUT%\TrayTune.exe
 exit /b 0
 
 :err

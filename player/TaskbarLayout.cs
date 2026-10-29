@@ -1,6 +1,6 @@
 using System.Windows.Automation;
 
-namespace TaskbarPlayer;
+namespace TrayTune;
 
 /// <summary>
 /// Где на панели задач заканчиваются кнопки приложений.
