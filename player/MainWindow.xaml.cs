@@ -546,6 +546,13 @@ public partial class MainWindow : Window
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add("Выход", null, (_, _) => Close());
 
+        // Windows 11 по умолчанию прячет новые значки: пробуем «продвинуть» свой.
+        // Запись в реестре появляется не мгновенно, поэтому пробуем дважды.
+        TrayPromoter.TryPromote();
+        var promoteTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        promoteTimer.Tick += (_, _) => { promoteTimer.Stop(); TrayPromoter.TryPromote(); };
+        promoteTimer.Start();
+
         _tray.ContextMenuStrip = menu;
         _tray.DoubleClick += (_, _) => ShowWidget();
     }
