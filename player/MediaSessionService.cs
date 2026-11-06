@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Media.Imaging;
 using Windows.Foundation;
@@ -52,6 +53,10 @@ public sealed class MediaSessionService
     private DateTimeOffset _artAttemptAt;
     private TimeSpan _basePosition;
     private DateTimeOffset _stamp;
+    private readonly object _posLock = new();
+    private bool _snapRequested;              // принудительно принять позицию SMTC
+    private TimeSpan _display;                 // сглаженная позиция для UI
+    private long _displayClock;                // Stopwatch.GetTimestamp()
     private double _rate = 1;
     private bool _playing;
 
@@ -98,16 +103,58 @@ public sealed class MediaSessionService
     /// </summary>
     public void RequestRefresh() => _ = RefreshAsync();
 
-    /// <summary>Пересчитывает позицию между обновлениями SMTC (они приходят редко).</summary>
+    /// <summary>
+    /// Двигает позицию между обновлениями SMTC. SMTC присылает позицию редко и с
+    /// запаздыванием, поэтому «сырое» значение прыгает назад — из-за этого полоса
+    /// дёргается. Здесь позиция идёт от монотонных часов, а расхождение с SMTC
+    /// подтягивается плавно, без скачков.
+    /// </summary>
     public void Tick()
     {
-        if (!_playing) return;
+        lock (_posLock)
+        {
+            var now = Stopwatch.GetTimestamp();
+            var dt = TimeSpan.FromSeconds((now - _displayClock) / (double)Stopwatch.Frequency);
+            _displayClock = now;
 
-        var elapsed = DateTimeOffset.UtcNow - _stamp;
-        var pos = _basePosition + TimeSpan.FromSeconds(elapsed.TotalSeconds * _rate);
-        if (State.Duration > TimeSpan.Zero && pos > State.Duration) pos = State.Duration;
-        if (pos < TimeSpan.Zero) pos = TimeSpan.Zero;
-        State.Position = pos;
+            if (dt > TimeSpan.FromMilliseconds(500)) dt = TimeSpan.Zero;   // окно подвисло — не прыгаем
+            if (dt < TimeSpan.Zero) dt = TimeSpan.Zero;
+
+            // Куда должна была бы прийти полоса по данным SMTC прямо сейчас.
+            var elapsed = DateTimeOffset.UtcNow - _stamp;
+            var target = _basePosition + TimeSpan.FromSeconds(elapsed.TotalSeconds * _rate);
+
+            if (_snapRequested)
+            {
+                // Перемотка, новый трек, пауза — здесь скачок честный.
+                _snapRequested = false;
+                _display = target;
+            }
+            else if (_playing)
+            {
+                var drift = (target - _display).TotalSeconds;
+
+                // Совсем большое расхождение — тоже перемотка, принимаем сразу.
+                if (drift > 8 || drift < -2)
+                {
+                    _display = target;
+                }
+                else
+                {
+                    // Обычный лаг SMTC (браузеры присылают позицию редко и с
+                    // запаздыванием) догоняем скоростью, а не скачком: полоса
+                    // плавно ускоряется на полсекунды и дотягивается до цели.
+                    // Именно жёсткий «снап» и был тем самым редким дёрганьем.
+                    var k = Math.Clamp(drift * 0.5, -0.5, 1.0);
+                    _display += dt * (1 + k);
+                }
+            }
+
+            if (_display < TimeSpan.Zero) _display = TimeSpan.Zero;
+            if (State.Duration > TimeSpan.Zero && _display > State.Duration) _display = State.Duration;
+
+            State.Position = _display;
+        }
     }
 
     public async Task<bool> TogglePlayPauseAsync()
@@ -145,6 +192,7 @@ public sealed class MediaSessionService
             {
                 _basePosition = position;
                 _stamp = DateTimeOffset.UtcNow;
+                _snapRequested = true;                 // перемотка — принимаем сразу
                 State.Position = position;
             }
             return ok;
@@ -221,10 +269,23 @@ public sealed class MediaSessionService
             var timeline = s.GetTimelineProperties();
             var props = await s.TryGetMediaPropertiesAsync();
 
+            var wasPlaying = _playing;
+            var previousTrack = State.Title;
+
             _playing = info.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
-            _rate = 1;
+            _rate = _playing ? 1.0 : 0.0;   // на паузе цель не должна убегать вперёд
             _basePosition = timeline.Position;
             _stamp = DateTimeOffset.UtcNow;
+
+            // Позицию принимаем рывком только при смене трека и паузе/возобновлении.
+            // Всё остальное подтягивается плавно (см. Tick), иначе полоса дёргается.
+            var trackChanged = !string.Equals(props?.Title, previousTrack, StringComparison.Ordinal);
+            var playStateChanged = wasPlaying != _playing;
+
+            if (trackChanged || playStateChanged)
+            {
+                _snapRequested = true;
+            }
 
             State.HasSession = true;
             State.Source = PrettyName(s.SourceAppUserModelId ?? "");
@@ -233,7 +294,16 @@ public sealed class MediaSessionService
             State.Artist = props?.Artist ?? "";
             State.IsPlaying = _playing;
             State.Position = _basePosition;
-            State.Duration = timeline.EndTime > TimeSpan.Zero ? timeline.EndTime : TimeSpan.Zero;
+
+            // Длительность браузеры присылают неточно и иногда на секунду-две
+            // дёргают её туда-сюда. Каждое такое изменение пересчитывает ширину
+            // полосы — вот и ещё один источник «дёрганья». Мелкие правки игнорируем.
+            var duration = timeline.EndTime > TimeSpan.Zero ? timeline.EndTime : TimeSpan.Zero;
+            if (trackChanged || State.Duration <= TimeSpan.Zero || duration <= TimeSpan.Zero
+                || Math.Abs((duration - State.Duration).TotalSeconds) > 1)
+            {
+                State.Duration = duration;
+            }
 
             var controls = info.Controls;
             State.CanPlayPause = controls.IsPlayPauseToggleEnabled;

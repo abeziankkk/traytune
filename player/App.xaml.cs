@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace TrayTune;
@@ -10,10 +11,22 @@ public partial class App : Application
 
     private Mutex? _singleInstance;
 
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int SetCurrentProcessExplicitAppUserModelID(string appId);
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Стабильный AppUserModelID: Windows 11 привязывает к нему значок в трее,
+        // без него иконка может не запоминаться и не показываться.
+        try { SetCurrentProcessExplicitAppUserModelID("TrayTune.MiniPlayer"); } catch { }
+
+        // Подстраховка для однофайловой сборки: не даём папке %TEMP%\.net
+        // остаться с правами администратора (иначе следующий запуск не стартует).
+        BundleRepair.Run();
+
         // Второй экземпляр не нужен: два виджета и две иконки в трее.
-        _singleInstance = new Mutex(true, "TrayTune.SingleInstance", out var isFirst);
+        var instanceName = Environment.GetEnvironmentVariable("TRAYTUNE_INSTANCE") ?? "TrayTune.SingleInstance";
+        _singleInstance = new Mutex(true, instanceName, out var isFirst);
         if (!isFirst)
         {
             // Зато второй запуск умеет попросить уже работающую копию открыть настройки.

@@ -31,8 +31,10 @@ var ctx = awareness switch
 SetProcessDpiAwarenessContext(ctx);
 Console.WriteLine($"awareness: {awareness} (set ok = {SetProcessDpiAwarenessContext(ctx)})");
 
+var outPath = args.FirstOrDefault(a => a.StartsWith("/out:"))?[5..];
+void WriteLog(string s) { if (outPath is not null) File.AppendAllText(outPath, s + Environment.NewLine); }
 var tray = FindWindowW("Shell_TrayWnd", null);
-Console.WriteLine($"Shell_TrayWnd = 0x{tray:X}");
+Console.WriteLine($"Shell_TrayWnd = 0x{tray:X}"); WriteLog($"tray=0x{tray:X}");
 if (tray == IntPtr.Zero) return 1;
 
 var wndProc = new WndProcDelegate(DefWindowProcW);
@@ -80,7 +82,7 @@ foreach (var (name, handle) in parents)
     var parent = GetParent(hwnd);
     var ok = parent == handle;
 
-    Console.WriteLine($"{name,-52} err={err,-5} rawParent=0x{parentRaw:X} childParent=0x{parent:X} => {(ok ? "OK" : "FAIL")}");
+    var line = $"{name,-52} err={err,-5} childParent=0x{parent:X} => {(ok ? "OK" : "FAIL")}"; Console.WriteLine(line); WriteLog(line);
 
     if (ok) SetParent(hwnd, IntPtr.Zero);
     DestroyWindow(hwnd);

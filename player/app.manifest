@@ -10,17 +10,13 @@
   </compatibility>
 
   <!--
-    Права администратора: без них Windows не отдаёт окно в панель задач
-    (SetParent возвращает access denied) и спокойнее относятся к значку в трее.
-    UAC-запрос показывается при каждом запуске.
+    Запускаемся с обычными правами, без UAC.
+
+    Встраивание окна в панель задач (SetParent) Windows разрешает только
+    привилегированному процессу, поэтому при обычном запуске виджет встаёт
+    поверх полосы панели (режим совместимости) — визуально то же самое.
+    Зато значок в трее, автозапуск и обычный запуск работают без подтверждений.
   -->
-  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-    <security>
-      <requestedPrivileges>
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
-      </requestedPrivileges>
-    </security>
-  </trustInfo>
 
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>
