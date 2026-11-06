@@ -23,6 +23,7 @@ dist-release/
 # служебные скриншоты (в README попадают только docked.png и settings.png)
 shots/*.png
 !shots/docked.png
+!shots/settings.png
 shots/corner.png
 shots/hover.png
 

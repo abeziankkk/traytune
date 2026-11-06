@@ -58,14 +58,18 @@ public sealed class Settings
     /// </summary>
     public bool Hidden { get; set; }
 
+    /// <summary>Подсказку про спрятанный значок в трее уже показывали.</summary>
+    public bool TrayHintShown { get; set; }
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         Converters = { new JsonStringEnumConverter() },
     };
 
-    private static string Folder => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TrayTune");
+    private static string Folder =>
+        Environment.GetEnvironmentVariable("TRAYTUNE_DATA")
+        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TrayTune");
 
     public static string FilePath => Path.Combine(Folder, "settings.json");
 

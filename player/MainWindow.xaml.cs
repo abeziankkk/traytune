@@ -31,6 +31,7 @@ public partial class MainWindow : Window
     private readonly DropShadowEffect _shadow;
 
     private WinForms.NotifyIcon? _tray;
+    private bool _promotionApplied;
     private bool _initialized;
     private bool _docked;
     private bool _overlayMode;
@@ -48,6 +49,14 @@ public partial class MainWindow : Window
         Loaded += OnLoadedAsync;
         Closing += (_, _) => SaveSettings();
         Closed += (_, _) => _tray?.Dispose();
+
+        // Полоса обновляется на каждом кадре: при 4 Гц она заметно «шагает».
+        CompositionTarget.Rendering += (_, _) =>
+        {
+            if (!_media.State.IsPlaying) return;
+            _media.Tick();
+            UpdateProgress();
+        };
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         _timer.Tick += (_, _) =>
@@ -93,15 +102,6 @@ public partial class MainWindow : Window
         ApplyLook();
         BuildTray();
 
-        if (IntegrityLevel.IsLow())
-        {
-            Log.Write("started at low integrity: docking and tray icon will not work");
-            MessageBox.Show(
-                "TrayTune запущен с ограниченными правами (низкий уровень целостности).`n`n" +
-                "В этом режиме Windows не разрешает встроить окно в панель задач и не показывает значок в трее.`n`n" +
-                "Запусти TrayTune.exe обычным двойным кликом из проводника.",
-                "TrayTune", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
         _media.SelectedAppId = _settings.AppId ?? "";
         _timer.Start();
         _refreshTimer.Start();
@@ -582,13 +582,78 @@ public partial class MainWindow : Window
         promoteTimer.Tick += (_, _) =>
         {
             attempts++;
-            if (TrayPromoter.TryPromote() || attempts >= 5) promoteTimer.Stop();
+            if (ApplyPromotion())
+            {
+                promoteTimer.Stop();
+                return;
+            }
+
+            if (attempts < 10) return;
+
+            // Значок создан, но так и остался в переполнении. Один раз говорим,
+            // где его включить: иначе кажется, что программа не запустилась.
+            promoteTimer.Stop();
+            ShowTrayHint();
         };
         promoteTimer.Start();
-        TrayPromoter.TryPromote();
+
+        if (ApplyPromotion()) promoteTimer.Stop();
 
         _tray.ContextMenuStrip = menu;
         _tray.DoubleClick += (_, _) => ShowWidget();
+    }
+
+    /// <summary>
+    /// Выставляет «показывать всегда» и перерегистрирует значок. Explorer читает
+    /// эту настройку в момент добавления значка, поэтому запись в реестр без
+    /// повторной регистрации ни на что не влияет — значок остаётся в переполнении
+    /// до перезапуска проводника.
+    /// </summary>
+    private bool ApplyPromotion()
+    {
+        if (!TrayPromoter.TryPromote()) return false;
+        if (_promotionApplied) return true;
+
+        _promotionApplied = true;
+
+        try
+        {
+            _tray!.Visible = false;
+            _tray.Visible = true;
+            Log.Write("tray: icon re-registered");
+        }
+        catch (Exception e)
+        {
+            Log.Write("tray: re-register failed: " + e.Message);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Windows 11 держит новые значки в переполнении панели задач, и запись в
+    /// реестр не всегда разрешена. Один раз показываем подсказку, где включить
+    /// значок: без неё выглядит так, будто программа не запустилась.
+    /// </summary>
+    private void ShowTrayHint()
+    {
+        if (_settings.TrayHintShown || _tray is null) return;
+
+        try
+        {
+            _tray.ShowBalloonTip(
+                8000,
+                "TrayTune работает",
+                "Значок спрятан в переполнении панели задач. Включить: Параметры → Персонализация → Панель задач → Другие значки в области уведомлений → TrayTune.",
+                WinForms.ToolTipIcon.Info);
+        }
+        catch
+        {
+            // Подсказка — не повод падать.
+        }
+
+        _settings.TrayHintShown = true;
+        SaveSettings();
     }
 
     private static System.Drawing.Icon LoadTrayIcon()
@@ -651,4 +716,3 @@ public partial class MainWindow : Window
         _settings.Save();
     }
 }
-

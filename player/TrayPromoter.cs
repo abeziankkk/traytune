@@ -21,15 +21,31 @@ internal static class TrayPromoter
             var exe = Environment.ProcessPath;
             if (string.IsNullOrWhiteSpace(exe)) return false;
 
-            using var root = Registry.CurrentUser.OpenSubKey(SettingsKey, writable: true);
-            if (root is null) return false;
-
-            foreach (var subKeyName in root.GetSubKeyNames())
+            using var root = Registry.CurrentUser.OpenSubKey(SettingsKey, writable: false);
+            if (root is null)
             {
-                using var subKey = root.OpenSubKey(subKeyName, writable: true);
-                if (subKey is null) continue;
+                Log.Write("tray: no NotifyIconSettings key");
+                return false;
+            }
 
-                if (subKey.GetValue("ExecutablePath") is not string path || string.IsNullOrWhiteSpace(path)) continue;
+            var names = root.GetSubKeyNames();
+            if (names.Length == 0)
+            {
+                Log.Write("tray: NotifyIconSettings is empty yet");
+                return false;
+            }
+
+            var sawOurEntry = false;
+
+            foreach (var subKeyName in names)
+            {
+                string? path;
+                using (var read = root.OpenSubKey(subKeyName, writable: false))
+                {
+                    path = read?.GetValue("ExecutablePath") as string;
+                }
+
+                if (string.IsNullOrWhiteSpace(path)) continue;
 
                 string normalized;
                 try { normalized = Path.GetFullPath(path); }
@@ -37,14 +53,51 @@ internal static class TrayPromoter
 
                 if (!string.Equals(normalized, exe, StringComparison.OrdinalIgnoreCase)) continue;
 
-                if (subKey.GetValue("IsPromoted") is int promoted && promoted == 1) return true;
+                sawOurEntry = true;
 
-                subKey.SetValue("IsPromoted", 1, RegistryValueKind.DWord);
-                Log.Write($"tray: promoted {subKeyName}");
-                return true;
+                // Сначала смотрим только на чтение: запись может быть уже выставлена
+                // (например, администратором), а писать в ключ обычному процессу
+                // Windows иногда не даёт — это не повод считать значок спрятанным.
+                object? current;
+                try
+                {
+                    using var read = root.OpenSubKey(subKeyName, writable: false);
+                    current = read?.GetValue("IsPromoted");
+                }
+                catch (Exception inner)
+                {
+                    Log.Write($"tray: cannot read {subKeyName}: {inner.Message}");
+                    continue;
+                }
+
+                if (current is int value && value == 1)
+                {
+                    Log.Write($"tray: already promoted {subKeyName}");
+                    return true;
+                }
+
+                try
+                {
+                    using var subKey = root.OpenSubKey(subKeyName, writable: true);
+                    if (subKey is null)
+                    {
+                        Log.Write($"tray: cannot open {subKeyName} for write");
+                        continue;
+                    }
+
+                    subKey.SetValue("IsPromoted", 1, RegistryValueKind.DWord);
+                    Log.Write($"tray: promoted {subKeyName}");
+                    return true;
+                }
+                catch (Exception inner)
+                {
+                    Log.Write($"tray: promote denied for {subKeyName}: {inner.Message}");
+                }
             }
 
-            Log.Write("tray: no NotifyIconSettings entry yet");
+            Log.Write(sawOurEntry
+                ? "tray: entry found but not promoted"
+                : "tray: no NotifyIconSettings entry for this exe yet");
             return false;
         }
         catch (Exception e)
