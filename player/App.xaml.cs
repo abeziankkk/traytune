@@ -24,6 +24,9 @@ public partial class App : Application
         // остаться с правами администратора (иначе следующий запуск не стартует).
         BundleRepair.Run();
 
+        // Задачи планировщика от версий до 0.2.0 включали автозапуск сами по себе.
+        LegacyCleanup.Run();
+
         // Второй экземпляр не нужен: два виджета и две иконки в трее.
         var instanceName = Environment.GetEnvironmentVariable("TRAYTUNE_INSTANCE") ?? "TrayTune.SingleInstance";
         _singleInstance = new Mutex(true, instanceName, out var isFirst);

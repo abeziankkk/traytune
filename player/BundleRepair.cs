@@ -51,7 +51,7 @@ internal static class BundleRepair
         }
     }
 
-    private static bool IsElevated()
+    internal static bool IsElevated()
     {
         try
         {

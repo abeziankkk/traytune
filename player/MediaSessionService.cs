@@ -149,6 +149,12 @@ public sealed class MediaSessionService
                     _display += dt * (1 + k);
                 }
             }
+            else
+            {
+                // На паузе цель не движется, поэтому принимаем её как есть: иначе
+                // перемотка на паузе не отобразится до следующего тика.
+                _display = target;
+            }
 
             if (_display < TimeSpan.Zero) _display = TimeSpan.Zero;
             if (State.Duration > TimeSpan.Zero && _display > State.Duration) _display = State.Duration;
@@ -274,8 +280,23 @@ public sealed class MediaSessionService
 
             _playing = info.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
             _rate = _playing ? 1.0 : 0.0;   // на паузе цель не должна убегать вперёд
-            _basePosition = timeline.Position;
-            _stamp = DateTimeOffset.UtcNow;
+
+            // SMTC отдаёт позицию на момент LastUpdatedTime, а не «сейчас». Если
+            // поставить метку «сейчас», цель в Tick() каждую секунду откатывается
+            // назад на возраст данных, и полоса дёргается. Берём настоящую метку.
+            // Защита: мусорная метка (старше 12 часов или из будущего) — заменяем.
+            var stamp = timeline.LastUpdatedTime;
+            var now = DateTimeOffset.UtcNow;
+            if (stamp > now + TimeSpan.FromSeconds(2) || stamp < now - TimeSpan.FromHours(12))
+            {
+                stamp = now;
+            }
+
+            lock (_posLock)
+            {
+                _basePosition = timeline.Position;
+                _stamp = stamp;
+            }
 
             // Позицию принимаем рывком только при смене трека и паузе/возобновлении.
             // Всё остальное подтягивается плавно (см. Tick), иначе полоса дёргается.
@@ -293,7 +314,9 @@ public sealed class MediaSessionService
             State.Title = props?.Title ?? "";
             State.Artist = props?.Artist ?? "";
             State.IsPlaying = _playing;
-            State.Position = _basePosition;
+            // State.Position здесь не трогаем: позицию для отрисовки считает
+            // только Tick() (сглаженное значение). «Сырая» позиция из SMTC,
+            // записанная сюда, попадала на один кадр и давала скачок назад.
 
             // Длительность браузеры присылают неточно и иногда на секунду-две
             // дёргают её туда-сюда. Каждое такое изменение пересчитывает ширину
@@ -312,6 +335,10 @@ public sealed class MediaSessionService
             State.CanSeek = controls.IsPlaybackPositionEnabled;
 
             await LoadArtAsync(props);
+
+            // Отложенный скачок (новый трек, пауза, перемотка) применяем сразу,
+            // до отрисовки: иначе окно успеет показать старое положение.
+            if (_snapRequested) Tick();
 
             Changed?.Invoke();
         }

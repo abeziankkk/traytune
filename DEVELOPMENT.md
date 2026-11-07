@@ -45,13 +45,15 @@ build-release-assets.cmd
 запущено, закрой его.
 
 Версия задаётся в `player/TrayTune.csproj` (`<Version>`), она же попадает в
-свойства exe. Порядок релиза: поднять версию → `build-release-assets.cmd` →
+свойства exe. Порядок релиза: дописать раздел в `CHANGELOG.md` (перенести
+туда пункты из «Не выпущено») → поднять версию → `build-release-assets.cmd` →
 коммит → тег `vX.Y.Z` → загрузить файлы в GitHub Release.
 
 ## Структура
 
 ```
 ├── README.md, Troubleshooting.txt   документация для пользователей
+├── CHANGELOG.md                     история изменений по версиям
 ├── build-*.cmd                      сборка (см. выше)
 ├── player.cmd, spike.cmd            запуск приложения и диагностического зонда
 ├── .github/workflows/build.yml      CI: сборка и публикация артефакта
