@@ -29,6 +29,8 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _dockTimer;
     private readonly DispatcherTimer _refreshTimer;
     private readonly DropShadowEffect _shadow;
+    private readonly MarqueeText _titleMarquee;
+    private readonly MarqueeText _titleMarqueeCompact;
 
     private WinForms.NotifyIcon? _tray;
     private bool _promotionApplied;
@@ -50,9 +52,16 @@ public partial class MainWindow : Window
         Closing += (_, _) => SaveSettings();
         Closed += (_, _) => _tray?.Dispose();
 
+        // Бегущая строка: включается в настройках, двигается только если название не влезло.
+        _titleMarquee = new MarqueeText(TitleHost, TitleText, TitleTextEcho, TitleShift);
+        _titleMarqueeCompact = new MarqueeText(TitleHostC, TitleTextC, TitleTextCEcho, TitleShiftC);
+
         // Полоса обновляется на каждом кадре: при 4 Гц она заметно «шагает».
         CompositionTarget.Rendering += (_, _) =>
         {
+            _titleMarquee.Update(_settings.Marquee);
+            _titleMarqueeCompact.Update(_settings.Marquee);
+
             if (!_media.State.IsPlaying) return;
             _media.Tick();
             UpdateProgress();
@@ -164,6 +173,7 @@ public partial class MainWindow : Window
             : "Включи музыку в Spotify или браузере";
 
         TitleText.Text = title;
+        TitleTextEcho.Text = title;
         ArtistText.Text = subtitle;
         CoverImage.Source = st.Art;
         CoverPlaceholder.Visibility = st.Art is null ? Visibility.Visible : Visibility.Collapsed;
@@ -173,6 +183,7 @@ public partial class MainWindow : Window
         NextButton.IsEnabled = st.HasSession;
 
         TitleTextC.Text = title;
+        TitleTextCEcho.Text = title;
         ArtistTextC.Text = subtitle;
         CoverImageC.Source = st.Art;
         CoverPlaceholderC.Visibility = st.Art is null ? Visibility.Visible : Visibility.Collapsed;
@@ -183,15 +194,17 @@ public partial class MainWindow : Window
 
         ToolTip = st.HasSession && !_docked ? $"Источник: {st.Source}" : null;
 
-        ApplyAccent(st.SourceId);
+        ApplyAccent(st);
         UpdateProgress();
         UpdateTrayText();
     }
 
-    /// <summary>Цвет кнопки и прогресса: авто по источнику или выбранный вручную.</summary>
-    private void ApplyAccent(string sourceId)
+    /// <summary>Цвет кнопки и прогресса: авто по источнику, из обложки или выбранный вручную.</summary>
+    private void ApplyAccent(PlayerState st)
     {
-        var accent = Accents.Resolve(_settings.Accent, sourceId);
+        var accent = _settings.Accent == AccentMode.Cover
+            ? CoverPalette.From(st.Art) ?? Accents.Resolve(AccentMode.Auto, st.SourceId)
+            : Accents.Resolve(_settings.Accent, st.SourceId);
 
         PlayButton.Background = accent;
         PlayButtonC.Background = accent;

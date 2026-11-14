@@ -15,6 +15,9 @@ public enum AccentMode
 
     /// <summary>Нейтральный синий — для VLC, AIMP и прочих.</summary>
     Other,
+
+    /// <summary>Доминирующий цвет обложки текущего трека (см. <see cref="CoverPalette"/>).</summary>
+    Cover,
 }
 
 /// <summary>Кисти акцента: кнопка play и полоса прогресса.</summary>

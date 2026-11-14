@@ -106,11 +106,26 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock x:Name="TitleText" Grid.Row="0"
-                               Text="Ничего не играет"
-                               FontSize="14.5" FontWeight="SemiBold"
-                               Foreground="#FFF3F3F8"
-                               TextTrimming="CharacterEllipsis"/>
+                    <!-- Заголовок: Canvas нужен, чтобы ActualWidth был полной шириной
+                         строки, а не обрезанной виджетом. Внутри две копии текста —
+                         вторая нужна для бесшовной прокрутки. -->
+                    <Grid x:Name="TitleHost" Grid.Row="0" ClipToBounds="True" Height="20">
+                        <Canvas x:Name="TitleCanvas" Height="20">
+                            <Canvas.RenderTransform>
+                                <TranslateTransform x:Name="TitleShift"/>
+                            </Canvas.RenderTransform>
+                            <TextBlock x:Name="TitleText"
+                                       Text="Ничего не играет"
+                                       FontSize="14.5" FontWeight="SemiBold"
+                                       Foreground="#FFF3F3F8"/>
+                            <TextBlock x:Name="TitleTextEcho"
+                                       Text=""
+                                       FontSize="14.5" FontWeight="SemiBold"
+                                       Foreground="#FFF3F3F8"
+                                       Visibility="Collapsed"
+                                       IsHitTestVisible="False"/>
+                        </Canvas>
+                    </Grid>
 
                     <TextBlock x:Name="ArtistText" Grid.Row="1"
                                Text="Spotify или Яндекс.Музыка"
@@ -166,9 +181,18 @@
                 </Border>
 
                 <StackPanel Grid.Column="1" Margin="9,0,8,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="TitleTextC" Text="Ничего не играет"
-                               FontSize="13" FontWeight="SemiBold" Foreground="#FFF3F3F8"
-                               TextTrimming="CharacterEllipsis"/>
+                    <Grid x:Name="TitleHostC" ClipToBounds="True" Height="18">
+                        <Canvas x:Name="TitleCanvasC" Height="18">
+                            <Canvas.RenderTransform>
+                                <TranslateTransform x:Name="TitleShiftC"/>
+                            </Canvas.RenderTransform>
+                            <TextBlock x:Name="TitleTextC" Text="Ничего не играет"
+                                       FontSize="13" FontWeight="SemiBold" Foreground="#FFF3F3F8"/>
+                            <TextBlock x:Name="TitleTextCEcho" Text=""
+                                       FontSize="13" FontWeight="SemiBold" Foreground="#FFF3F3F8"
+                                       Visibility="Collapsed" IsHitTestVisible="False"/>
+                        </Canvas>
+                    </Grid>
                     <TextBlock x:Name="ArtistTextC" Text="Spotify или Яндекс.Музыка"
                                FontSize="10.5" Foreground="#FF9E9EB0"
                                TextTrimming="CharacterEllipsis"/>

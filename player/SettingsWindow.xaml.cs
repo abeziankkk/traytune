@@ -30,6 +30,7 @@ public partial class SettingsWindow : Window
         AccentSpotify.IsChecked = _draft.Accent == AccentMode.Spotify;
         AccentYandex.IsChecked = _draft.Accent == AccentMode.Yandex;
         AccentWave.IsChecked = _draft.Accent == AccentMode.Wave;
+        AccentCover.IsChecked = _draft.Accent == AccentMode.Cover;
         AccentOther.IsChecked = _draft.Accent == AccentMode.Other;
 
         WidthNarrow.IsChecked = _draft.WidgetWidth <= 300;
@@ -37,6 +38,7 @@ public partial class SettingsWindow : Window
         WidthWide.IsChecked = _draft.WidgetWidth >= 380;
 
         ShowProgressCheck.IsChecked = _draft.ShowProgress;
+        MarqueeCheck.IsChecked = _draft.Marquee;
         DockedCheck.IsChecked = !_draft.Floating;
         AutostartCheck.IsChecked = _draft.Autostart;
 
@@ -75,6 +77,7 @@ public partial class SettingsWindow : Window
         _draft.Accent = AccentSpotify.IsChecked == true ? AccentMode.Spotify
             : AccentYandex.IsChecked == true ? AccentMode.Yandex
             : AccentWave.IsChecked == true ? AccentMode.Wave
+            : AccentCover.IsChecked == true ? AccentMode.Cover
             : AccentOther.IsChecked == true ? AccentMode.Other
             : AccentMode.Auto;
     }
@@ -95,6 +98,7 @@ public partial class SettingsWindow : Window
         _settings.Accent = _draft.Accent;
         _settings.WidgetWidth = _draft.WidgetWidth;
         _settings.ShowProgress = ShowProgressCheck.IsChecked == true;
+        _settings.Marquee = MarqueeCheck.IsChecked == true;
         _settings.Floating = DockedCheck.IsChecked != true;
         _settings.Autostart = AutostartCheck.IsChecked == true;
         _settings.Save();

@@ -47,8 +47,14 @@ public sealed class Settings
 
     public bool ShowProgress { get; set; } = true;
 
-    /// <summary>Ширина встроенного виджета в DIP: 260 / 300 / 380.</summary>
+    /// <summary>Ширина встроенного виджета в DIP: 280 / 340 / 400.</summary>
     public double WidgetWidth { get; set; } = 340;
+
+    /// <summary>
+    /// Прокручивать длинные названия треков бегущей строкой. Если название
+    /// помещается — оно просто стоит на месте.
+    /// </summary>
+    public bool Marquee { get; set; } = true;
 
     public bool Autostart { get; set; }
 

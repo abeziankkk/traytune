@@ -138,7 +138,7 @@
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <TextBlock Text="ЦВЕТ АКЦЕНТА" Style="{StaticResource CardTitle}"/>
-                            <StackPanel Orientation="Horizontal">
+                            <WrapPanel>
                                 <RadioButton x:Name="AccentAuto" Style="{StaticResource Option}" Content="Авто"
                                              GroupName="Accent" Checked="Accent_Checked"/>
                                 <RadioButton x:Name="AccentSpotify" Style="{StaticResource Option}" Content="Spotify"
@@ -147,9 +147,11 @@
                                              GroupName="Accent" Checked="Accent_Checked"/>
                                 <RadioButton x:Name="AccentWave" Style="{StaticResource Option}" Content="Волна"
                                              GroupName="Accent" Checked="Accent_Checked"/>
+                                <RadioButton x:Name="AccentCover" Style="{StaticResource Option}" Content="Из обложки"
+                                             GroupName="Accent" Checked="Accent_Checked"/>
                                 <RadioButton x:Name="AccentOther" Style="{StaticResource Option}" Content="Другой"
                                              GroupName="Accent" Checked="Accent_Checked"/>
-                            </StackPanel>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
 
@@ -173,6 +175,7 @@
                         <StackPanel>
                             <TextBlock Text="ПОВЕДЕНИЕ" Style="{StaticResource CardTitle}"/>
                             <CheckBox x:Name="ShowProgressCheck" Style="{StaticResource Check}" Content="Показывать полосу прогресса"/>
+                            <CheckBox x:Name="MarqueeCheck" Style="{StaticResource Check}" Content="Прокручивать длинные названия"/>
                             <CheckBox x:Name="DockedCheck" Style="{StaticResource Check}" Content="Встроить в панель задач"/>
                             <CheckBox x:Name="AutostartCheck" Style="{StaticResource Check}" Content="Запускать при входе в Windows" Margin="0"/>
                         </StackPanel>
