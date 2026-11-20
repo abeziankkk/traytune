@@ -20,6 +20,11 @@ public partial class App : Application
         // без него иконка может не запоминаться и не показываться.
         try { SetCurrentProcessExplicitAppUserModelID("TrayTune.MiniPlayer"); } catch { }
 
+        // Язык нужен до создания окон: XAML подставляет строки сразу при загрузке.
+        var startupSettings = Settings.Load();
+        Loc.Configure(startupSettings.Language);
+        Log.Write($"loc: {(Loc.IsEnglish ? "en" : "ru")} setting={startupSettings.Language}");
+
         // Подстраховка для однофайловой сборки: не даём папке %TEMP%\.net
         // остаться с правами администратора (иначе следующий запуск не стартует).
         BundleRepair.Run();
@@ -52,15 +57,15 @@ public partial class App : Application
 
         DispatcherUnhandledException += (_, args) =>
         {
-            Log(args.Exception);
+            WriteErrorLog(args.Exception);
             args.Handled = true;
         };
-        AppDomain.CurrentDomain.UnhandledException += (_, args) => Log(args.ExceptionObject as Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => WriteErrorLog(args.ExceptionObject as Exception);
 
         base.OnStartup(e);
     }
 
-    private static void Log(Exception? e)
+    private static void WriteErrorLog(Exception? e)
     {
         if (e is null) return;
         try

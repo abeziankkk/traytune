@@ -42,6 +42,13 @@ public partial class SettingsWindow : Window
         DockedCheck.IsChecked = !_draft.Floating;
         AutostartCheck.IsChecked = _draft.Autostart;
 
+        LangAuto.IsChecked = _draft.Language == AppLanguage.Auto;
+        LangRu.IsChecked = _draft.Language == AppLanguage.Ru;
+        LangEn.IsChecked = _draft.Language == AppLanguage.En;
+
+        CheckUpdatesCheck.IsChecked = _draft.CheckUpdates;
+        VolumeWheelCheck.IsChecked = _draft.VolumeWheel;
+
         _loading = false;
     }
 
@@ -91,8 +98,19 @@ public partial class SettingsWindow : Window
             : 340;
     }
 
+    private void Language_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+
+        _draft.Language = LangRu.IsChecked == true ? AppLanguage.Ru
+            : LangEn.IsChecked == true ? AppLanguage.En
+            : AppLanguage.Auto;
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
+        var languageChanged = _settings.Language != _draft.Language;
+
         _settings.Placement = _draft.Placement;
         _settings.Background = _draft.Background;
         _settings.Accent = _draft.Accent;
@@ -101,7 +119,12 @@ public partial class SettingsWindow : Window
         _settings.Marquee = MarqueeCheck.IsChecked == true;
         _settings.Floating = DockedCheck.IsChecked != true;
         _settings.Autostart = AutostartCheck.IsChecked == true;
+        _settings.Language = _draft.Language;
+        _settings.CheckUpdates = CheckUpdatesCheck.IsChecked == true;
+        _settings.VolumeWheel = VolumeWheelCheck.IsChecked == true;
         _settings.Save();
+
+        if (languageChanged) Loc.Configure(_settings.Language);
 
         DialogResult = true;
     }

@@ -56,6 +56,18 @@ public sealed class Settings
     /// </summary>
     public bool Marquee { get; set; } = true;
 
+    /// <summary>Язык интерфейса. Auto — русский на русской системе, иначе английский.</summary>
+    public AppLanguage Language { get; set; } = AppLanguage.Auto;
+
+    /// <summary>Менять громкость колесом мыши над виджетом.</summary>
+    public bool VolumeWheel { get; set; } = true;
+
+    /// <summary>Проверять при запуске, не вышла ли новая версия на GitHub.</summary>
+    public bool CheckUpdates { get; set; } = true;
+
+    /// <summary>Про какую версию уже показывали уведомление, чтобы не повторяться.</summary>
+    public string? LastNotifiedVersion { get; set; }
+
     public bool Autostart { get; set; }
 
     /// <summary>

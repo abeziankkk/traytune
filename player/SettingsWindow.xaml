@@ -1,8 +1,9 @@
 <Window x:Class="TrayTune.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:TrayTune"
         Title="Настройки TrayTune"
-        Width="440" MaxHeight="720" SizeToContent="Height"
+        Width="440" MaxHeight="840" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
         WindowStartupLocation="CenterScreen"
@@ -95,7 +96,7 @@
             <!-- Шапка -->
             <Grid Margin="2,0,0,14" MouseLeftButtonDown="Header_MouseLeftButtonDown">
                 <StackPanel>
-                    <TextBlock Text="Настройки" FontSize="17" FontWeight="SemiBold" Foreground="#FFF5F5FA"/>
+                    <TextBlock Text="{loc:Loc settings.title}" FontSize="17" FontWeight="SemiBold" Foreground="#FFF5F5FA"/>
                     <TextBlock Text="TrayTune" FontSize="11" Foreground="#FF6E6E82" Margin="0,2,0,0"/>
                 </StackPanel>
                 <Button Content="✕" HorizontalAlignment="Right" Width="26" Height="26" FontSize="11"
@@ -107,13 +108,13 @@
                     <!-- Положение -->
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <TextBlock Text="ПОЛОЖЕНИЕ В ПАНЕЛИ" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="{loc:Loc settings.card.placement}" Style="{StaticResource CardTitle}"/>
                             <StackPanel Orientation="Horizontal">
-                                <RadioButton x:Name="PlacementLeft" Style="{StaticResource Option}" Content="Слева"
+                                <RadioButton x:Name="PlacementLeft" Style="{StaticResource Option}" Content="{loc:Loc placement.left}"
                                              GroupName="Placement" Checked="Placement_Checked"/>
-                                <RadioButton x:Name="PlacementCenter" Style="{StaticResource Option}" Content="По центру"
+                                <RadioButton x:Name="PlacementCenter" Style="{StaticResource Option}" Content="{loc:Loc placement.center}"
                                              GroupName="Placement" Checked="Placement_Checked"/>
-                                <RadioButton x:Name="PlacementRight" Style="{StaticResource Option}" Content="Справа"
+                                <RadioButton x:Name="PlacementRight" Style="{StaticResource Option}" Content="{loc:Loc placement.right}"
                                              GroupName="Placement" Checked="Placement_Checked"/>
                             </StackPanel>
                         </StackPanel>
@@ -122,13 +123,13 @@
                     <!-- Фон -->
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <TextBlock Text="ФОН" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="{loc:Loc settings.card.background}" Style="{StaticResource CardTitle}"/>
                             <StackPanel Orientation="Horizontal">
-                                <RadioButton x:Name="BgTransparent" Style="{StaticResource Option}" Content="Прозрачный"
+                                <RadioButton x:Name="BgTransparent" Style="{StaticResource Option}" Content="{loc:Loc bg.transparent}"
                                              GroupName="Background" Checked="Background_Checked"/>
-                                <RadioButton x:Name="BgTranslucent" Style="{StaticResource Option}" Content="Полупрозрачный"
+                                <RadioButton x:Name="BgTranslucent" Style="{StaticResource Option}" Content="{loc:Loc bg.translucent}"
                                              GroupName="Background" Checked="Background_Checked"/>
-                                <RadioButton x:Name="BgSolid" Style="{StaticResource Option}" Content="Тёмный"
+                                <RadioButton x:Name="BgSolid" Style="{StaticResource Option}" Content="{loc:Loc bg.solid}"
                                              GroupName="Background" Checked="Background_Checked"/>
                             </StackPanel>
                         </StackPanel>
@@ -137,19 +138,19 @@
                     <!-- Цвет -->
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <TextBlock Text="ЦВЕТ АКЦЕНТА" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="{loc:Loc settings.card.accent}" Style="{StaticResource CardTitle}"/>
                             <WrapPanel>
-                                <RadioButton x:Name="AccentAuto" Style="{StaticResource Option}" Content="Авто"
+                                <RadioButton x:Name="AccentAuto" Style="{StaticResource Option}" Content="{loc:Loc accent.auto}"
                                              GroupName="Accent" Checked="Accent_Checked"/>
                                 <RadioButton x:Name="AccentSpotify" Style="{StaticResource Option}" Content="Spotify"
                                              GroupName="Accent" Checked="Accent_Checked"/>
-                                <RadioButton x:Name="AccentYandex" Style="{StaticResource Option}" Content="Яндекс"
+                                <RadioButton x:Name="AccentYandex" Style="{StaticResource Option}" Content="{loc:Loc accent.yandex}"
                                              GroupName="Accent" Checked="Accent_Checked"/>
-                                <RadioButton x:Name="AccentWave" Style="{StaticResource Option}" Content="Волна"
+                                <RadioButton x:Name="AccentWave" Style="{StaticResource Option}" Content="{loc:Loc accent.wave}"
                                              GroupName="Accent" Checked="Accent_Checked"/>
-                                <RadioButton x:Name="AccentCover" Style="{StaticResource Option}" Content="Из обложки"
+                                <RadioButton x:Name="AccentCover" Style="{StaticResource Option}" Content="{loc:Loc accent.cover}"
                                              GroupName="Accent" Checked="Accent_Checked"/>
-                                <RadioButton x:Name="AccentOther" Style="{StaticResource Option}" Content="Другой"
+                                <RadioButton x:Name="AccentOther" Style="{StaticResource Option}" Content="{loc:Loc accent.other}"
                                              GroupName="Accent" Checked="Accent_Checked"/>
                             </WrapPanel>
                         </StackPanel>
@@ -158,13 +159,13 @@
                     <!-- Ширина -->
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <TextBlock Text="ШИРИНА" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="{loc:Loc settings.card.width}" Style="{StaticResource CardTitle}"/>
                             <StackPanel Orientation="Horizontal">
-                                <RadioButton x:Name="WidthNarrow" Style="{StaticResource Option}" Content="Узкая"
+                                <RadioButton x:Name="WidthNarrow" Style="{StaticResource Option}" Content="{loc:Loc width.narrow}"
                                              GroupName="Width" Checked="Width_Checked"/>
-                                <RadioButton x:Name="WidthNormal" Style="{StaticResource Option}" Content="Обычная"
+                                <RadioButton x:Name="WidthNormal" Style="{StaticResource Option}" Content="{loc:Loc width.normal}"
                                              GroupName="Width" Checked="Width_Checked"/>
-                                <RadioButton x:Name="WidthWide" Style="{StaticResource Option}" Content="Широкая"
+                                <RadioButton x:Name="WidthWide" Style="{StaticResource Option}" Content="{loc:Loc width.wide}"
                                              GroupName="Width" Checked="Width_Checked"/>
                             </StackPanel>
                         </StackPanel>
@@ -173,11 +174,37 @@
                     <!-- Поведение -->
                     <Border Style="{StaticResource Card}" Margin="0,0,0,14">
                         <StackPanel>
-                            <TextBlock Text="ПОВЕДЕНИЕ" Style="{StaticResource CardTitle}"/>
-                            <CheckBox x:Name="ShowProgressCheck" Style="{StaticResource Check}" Content="Показывать полосу прогресса"/>
-                            <CheckBox x:Name="MarqueeCheck" Style="{StaticResource Check}" Content="Прокручивать длинные названия"/>
-                            <CheckBox x:Name="DockedCheck" Style="{StaticResource Check}" Content="Встроить в панель задач"/>
-                            <CheckBox x:Name="AutostartCheck" Style="{StaticResource Check}" Content="Запускать при входе в Windows" Margin="0"/>
+                            <TextBlock Text="{loc:Loc settings.card.behavior}" Style="{StaticResource CardTitle}"/>
+                            <CheckBox x:Name="ShowProgressCheck" Style="{StaticResource Check}" Content="{loc:Loc behavior.progress}"/>
+                            <CheckBox x:Name="MarqueeCheck" Style="{StaticResource Check}" Content="{loc:Loc behavior.marquee}"/>
+                            <CheckBox x:Name="DockedCheck" Style="{StaticResource Check}" Content="{loc:Loc behavior.docked}"/>
+                            <CheckBox x:Name="AutostartCheck" Style="{StaticResource Check}" Content="{loc:Loc behavior.autostart}"/>
+                            <CheckBox x:Name="VolumeWheelCheck" Style="{StaticResource Check}" Content="{loc:Loc behavior.volume}" Margin="0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Язык -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc settings.card.language}" Style="{StaticResource CardTitle}"/>
+                            <WrapPanel>
+                                <RadioButton x:Name="LangAuto" Style="{StaticResource Option}"
+                                             Content="{loc:Loc language.auto}"
+                                             GroupName="Language" Checked="Language_Checked"/>
+                                <RadioButton x:Name="LangRu" Style="{StaticResource Option}" Content="Русский"
+                                             GroupName="Language" Checked="Language_Checked"/>
+                                <RadioButton x:Name="LangEn" Style="{StaticResource Option}" Content="English"
+                                             GroupName="Language" Checked="Language_Checked"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Обновления -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc settings.card.updates}" Style="{StaticResource CardTitle}"/>
+                            <CheckBox x:Name="CheckUpdatesCheck" Style="{StaticResource Check}"
+                                      Content="{loc:Loc updates.check}" Margin="0"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -187,10 +214,10 @@
             <StackPanel Margin="0,4,0,0">
                 <TextBlock x:Name="HintText" FontSize="10.5" Foreground="#FF6E6E82"
                            Margin="2,0,0,8" TextWrapping="Wrap"
-                           Text="Изменения применяются сразу после сохранения"/>
+                           Text="{loc:Loc settings.hint}"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Отмена" Style="{StaticResource GhostButton}" Margin="0,0,10,0" Click="Cancel_Click"/>
-                    <Button Content="Сохранить" Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
+                    <Button Content="{loc:Loc button.cancel}" Style="{StaticResource GhostButton}" Margin="0,0,10,0" Click="Cancel_Click"/>
+                    <Button Content="{loc:Loc button.save}" Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
                 </StackPanel>
             </StackPanel>
         </StackPanel>

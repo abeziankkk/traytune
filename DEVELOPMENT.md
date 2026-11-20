@@ -73,6 +73,11 @@ build-release-assets.cmd
 │   ├── Accents.cs                   палитра акцентов по источнику
 │   ├── Autostart.cs                 автозапуск через HKCU\...\Run
 │   ├── TrayPromoter.cs              «показывать значок всегда» на Windows 11
+│   ├── Localization.cs              строки RU/EN и выбор языка
+│   ├── LocExtension.cs              {loc:Loc key} для XAML
+│   ├── UpdateChecker.cs             проверка последнего релиза на GitHub
+│   ├── VolumeControl.cs             системная громкость (Core Audio)
+│   ├── WheelHook.cs                 колесо мыши над виджетом (low-level hook)
 │   ├── BundleRepair.cs              починка прав %TEMP%\.net после запуска от админа
 │   └── Log.cs                       debug.log рядом с exe
 │

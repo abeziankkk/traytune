@@ -33,6 +33,12 @@ public partial class MainWindow : Window
     private readonly MarqueeText _titleMarqueeCompact;
 
     private WinForms.NotifyIcon? _tray;
+    private WinForms.ContextMenuStrip? _trayMenu;
+    private WheelHook? _wheelHook;
+    private DispatcherTimer? _volumeOverlayTimer;
+    private DateTime _volumeOverlayUntil;
+    private string? _updateTag;
+    private string? _updateUrl;
     private bool _promotionApplied;
     private bool _initialized;
     private bool _docked;
@@ -50,7 +56,11 @@ public partial class MainWindow : Window
         SourceInitialized += (_, _) => Native.MakeNoActivateToolWindow(this);
         Loaded += OnLoadedAsync;
         Closing += (_, _) => SaveSettings();
-        Closed += (_, _) => _tray?.Dispose();
+        Closed += (_, _) =>
+        {
+            _tray?.Dispose();
+            _wheelHook?.Dispose();
+        };
 
         // Бегущая строка: включается в настройках, двигается только если название не влезло.
         _titleMarquee = new MarqueeText(TitleHost, TitleText, TitleTextEcho, TitleShift);
@@ -93,7 +103,7 @@ public partial class MainWindow : Window
 
             if (!TaskbarHost.IsAttached(this))
             {
-                SetDocked(false, "встраивание потеряно — вернул обычный виджет");
+                SetDocked(false, Loc.Get("notify.dock_lost"));
                 return;
             }
             TaskbarHost.Reposition(this);
@@ -117,13 +127,16 @@ public partial class MainWindow : Window
         ListenForExternalCommands();
         Render();
 
+        if (_settings.VolumeWheel) InstallWheelHook();
+        if (_settings.CheckUpdates) _ = CheckUpdatesAsync();
+
         try
         {
             await _media.InitializeAsync();
         }
         catch (Exception ex)
         {
-            TitleText.Text = "Медиасессии недоступны";
+            TitleText.Text = Loc.Get("widget.no_sessions");
             ArtistText.Text = ex.GetType().Name;
         }
 
@@ -167,10 +180,10 @@ public partial class MainWindow : Window
     {
         var st = _media.State;
 
-        var title = string.IsNullOrWhiteSpace(st.Title) ? "Ничего не играет" : st.Title;
+        var title = string.IsNullOrWhiteSpace(st.Title) ? Loc.Get("widget.no_track") : st.Title;
         var subtitle = st.HasSession
             ? (string.IsNullOrWhiteSpace(st.Artist) ? st.Source : st.Artist)
-            : "Включи музыку в Spotify или браузере";
+            : Loc.Get("widget.no_session");
 
         TitleText.Text = title;
         TitleTextEcho.Text = title;
@@ -192,7 +205,7 @@ public partial class MainWindow : Window
         PrevButtonC.IsEnabled = st.HasSession;
         NextButtonC.IsEnabled = st.HasSession;
 
-        ToolTip = st.HasSession && !_docked ? $"Источник: {st.Source}" : null;
+        ToolTip = st.HasSession && !_docked ? Loc.Format("widget.tooltip_source", st.Source) : null;
 
         ApplyAccent(st);
         UpdateProgress();
@@ -229,10 +242,10 @@ public partial class MainWindow : Window
         var st = _media.State;
         var text = st.HasSession
             ? $"{st.Artist} — {st.Title}".Trim(' ', '—')
-            : "Мини-плеер";
+            : Loc.Get("widget.tray_tooltip");
 
         if (text.Length > 62) text = text[..62];
-        try { _tray.Text = string.IsNullOrWhiteSpace(text) ? "Мини-плеер" : text; }
+        try { _tray.Text = string.IsNullOrWhiteSpace(text) ? Loc.Get("widget.tray_tooltip") : text; }
         catch { /* у NotifyIcon лимит на длину подсказки */ }
     }
 
@@ -326,7 +339,7 @@ public partial class MainWindow : Window
             SaveSettings();
             ApplyLook();
 
-            Notify("Панель задач не отдала окно — виджет поставлен поверх неё (режим совместимости)");
+            Notify(Loc.Get("notify.compat"));
             return;
         }
 
@@ -335,7 +348,7 @@ public partial class MainWindow : Window
         Height = WidgetHeight;
         PlaceWindow();
         ApplyLook();
-        Notify($"Не удалось встроить: {info}");
+        Notify(Loc.Format("notify.dock_failed", info));
     }
 
     private void ApplyCompactLayout(bool compact)
@@ -370,6 +383,9 @@ public partial class MainWindow : Window
 
             Autostart.Set(_settings.Autostart);
             ApplyLook();
+
+            if (_settings.VolumeWheel) InstallWheelHook();
+            else RemoveWheelHook();
 
             var desiredDocked = !_settings.Floating;
             if (desiredDocked != _docked)
@@ -485,11 +501,17 @@ public partial class MainWindow : Window
     {
         var menu = new ContextMenu();
 
-        var sources = new MenuItem { Header = "Источник" };
+        if (_updateTag is not null)
+        {
+            menu.Items.Add(BuildUpdateItem());
+            menu.Items.Add(new Separator());
+        }
+
+        var sources = new MenuItem { Header = Loc.Get("menu.sources") };
         var sessions = _media.GetSessions();
         if (sessions.Count == 0)
         {
-            sources.Items.Add(new MenuItem { Header = "ничего не играет", IsEnabled = false });
+            sources.Items.Add(new MenuItem { Header = Loc.Get("menu.no_sources"), IsEnabled = false });
         }
         else
         {
@@ -517,24 +539,24 @@ public partial class MainWindow : Window
 
         var dock = new MenuItem
         {
-            Header = "Встроить в панель задач",
+            Header = Loc.Get("menu.dock"),
             IsCheckable = true,
             IsChecked = _docked,
         };
         dock.Click += (_, _) => SetDocked(!_docked);
         menu.Items.Add(dock);
 
-        var settings = new MenuItem { Header = "Настройки…" };
+        var settings = new MenuItem { Header = Loc.Get("menu.settings") };
         settings.Click += (_, _) => OpenSettings();
         menu.Items.Add(settings);
 
         menu.Items.Add(new Separator());
 
-        var hide = new MenuItem { Header = "Скрыть" };
+        var hide = new MenuItem { Header = Loc.Get("menu.hide") };
         hide.Click += (_, _) => HideToTray();
         menu.Items.Add(hide);
 
-        var exit = new MenuItem { Header = "Выход" };
+        var exit = new MenuItem { Header = Loc.Get("menu.exit") };
         exit.Click += (_, _) => Close();
         menu.Items.Add(exit);
 
@@ -582,11 +604,12 @@ public partial class MainWindow : Window
         }
 
         var menu = new WinForms.ContextMenuStrip();
-        menu.Items.Add("Показать", null, (_, _) => ShowWidget());
-        menu.Items.Add("Настройки", null, (_, _) => OpenSettings());
-        menu.Items.Add("Встроить в панель задач", null, (_, _) => SetDocked(!_docked));
+        menu.Items.Add(Loc.Get("menu.show"), null, (_, _) => ShowWidget());
+        menu.Items.Add(Loc.Get("menu.settings"), null, (_, _) => OpenSettings());
+        menu.Items.Add(Loc.Get("menu.dock"), null, (_, _) => SetDocked(!_docked));
         menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add("Выход", null, (_, _) => Close());
+        menu.Items.Add(Loc.Get("menu.exit"), null, (_, _) => Close());
+        _trayMenu = menu;
 
         // Windows 11 прячет новые значки, а запись в реестре Explorer создаёт не сразу,
         // поэтому пробуем несколько раз с интервалом.
@@ -614,6 +637,124 @@ public partial class MainWindow : Window
 
         _tray.ContextMenuStrip = menu;
         _tray.DoubleClick += (_, _) => ShowWidget();
+    }
+
+    // ------------------------------------------------------------- громкость
+
+    private void InstallWheelHook()
+    {
+        if (_wheelHook is not null) return;
+
+        _wheelHook = new WheelHook(IsCursorOverWidget, OnWheelVolume);
+        Log.Write("wheel: хук колеса установлен");
+    }
+
+    private void RemoveWheelHook()
+    {
+        _wheelHook?.Dispose();
+        _wheelHook = null;
+    }
+
+    /// <summary>Курсор в экранных координатах над окном виджета?</summary>
+    private bool IsCursorOverWidget(Point cursor)
+    {
+        try
+        {
+            var origin = PointToScreen(new Point(0, 0));
+            return cursor.X >= origin.X && cursor.X <= origin.X + ActualWidth
+                && cursor.Y >= origin.Y && cursor.Y <= origin.Y + ActualHeight;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void OnWheelVolume(int direction)
+    {
+        if (!_settings.VolumeWheel) return;
+
+        var level = VolumeControl.Step(direction);
+        if (level is null) return;
+
+        Log.Write($"wheel: громкость {Math.Round(level.Value * 100)}%");
+        ShowVolumeOverlay(level.Value);
+    }
+
+    /// <summary>Показывает «Громкость 42%» вместо названия трека на пару секунд.</summary>
+    private void ShowVolumeOverlay(float level)
+    {
+        var text = Loc.Format("widget.volume", (int)Math.Round(level * 100));
+
+        TitleText.Text = text;
+        TitleTextEcho.Text = text;
+        TitleTextC.Text = text;
+        TitleTextCEcho.Text = text;
+
+        _volumeOverlayUntil = DateTime.UtcNow.AddSeconds(1.2);
+
+        _volumeOverlayTimer?.Stop();
+        _volumeOverlayTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.2) };
+        _volumeOverlayTimer.Tick += (_, _) =>
+        {
+            _volumeOverlayTimer?.Stop();
+            Render();
+        };
+        _volumeOverlayTimer.Start();
+    }
+
+    // ------------------------------------------------------------- обновления
+
+    private async Task CheckUpdatesAsync()
+    {
+        var found = await UpdateChecker.CheckAsync();
+        if (found is null) return;
+
+        _updateTag = found.Value.Tag;
+        _updateUrl = found.Value.Url;
+        AddTrayUpdateItem();
+
+        // Уведомляем один раз на версию, иначе это превращается в навязчивость.
+        if (string.Equals(_settings.LastNotifiedVersion, _updateTag, StringComparison.Ordinal)) return;
+
+        _settings.LastNotifiedVersion = _updateTag;
+        SaveSettings();
+        Notify(Loc.Format("notify.update", _updateTag));
+    }
+
+    private MenuItem BuildUpdateItem()
+    {
+        var item = new MenuItem { Header = Loc.Format("menu.update", _updateTag ?? "") };
+        item.Click += (_, _) => OpenUpdatePage();
+        return item;
+    }
+
+    private void AddTrayUpdateItem()
+    {
+        if (_trayMenu is null || _updateTag is null) return;
+
+        var item = new WinForms.ToolStripMenuItem(Loc.Format("menu.update", _updateTag));
+        item.Click += (_, _) => OpenUpdatePage();
+
+        _trayMenu.Items.Insert(0, item);
+        _trayMenu.Items.Insert(1, new WinForms.ToolStripSeparator());
+    }
+
+    private void OpenUpdatePage()
+    {
+        if (_updateUrl is null) return;
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_updateUrl)
+            {
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception e)
+        {
+            Log.Write("update: open failed: " + e.Message);
+        }
     }
 
     /// <summary>
@@ -656,8 +797,8 @@ public partial class MainWindow : Window
         {
             _tray.ShowBalloonTip(
                 8000,
-                "TrayTune работает",
-                "Значок спрятан в переполнении панели задач. Включить: Параметры → Персонализация → Панель задач → Другие значки в области уведомлений → TrayTune.",
+                Loc.Get("tray.working"),
+                Loc.Get("tray.hint"),
                 WinForms.ToolTipIcon.Info);
         }
         catch
@@ -711,7 +852,7 @@ public partial class MainWindow : Window
         SaveSettings();
         Hide();
 
-        if (!quiet) Notify("TrayTune свёрнут в трей");
+        if (!quiet) Notify(Loc.Get("notify.hidden"));
     }
 
     private void SaveSettings()
