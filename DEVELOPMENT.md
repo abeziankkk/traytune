@@ -39,7 +39,9 @@ TrayTune.exe --undock      :: снять встройку, оставить пл
 build-release-assets.cmd
 ```
 
-Кладёт в `dist-release/` три файла: `TrayTune-net10.exe` (framework-dependent,
+Кладёт промежуточные сборки в `dist-release/`, а готовые файлы копирует в
+`../TrayTune release/` (чистая папка для публикации: два exe, памятка, README и
+лицензия). В `dist-release/` остаются только три файла: `TrayTune-net10.exe` (framework-dependent,
 ~25 МБ), `TrayTune-portable.exe` (self-contained, ~72 МБ) и
 `Troubleshooting.txt`. Если exe не перезаписывается — значит приложение
 запущено, закрой его.
@@ -77,9 +79,9 @@ build-release-assets.cmd
 │   ├── LocExtension.cs              {loc:Loc key} для XAML
 │   ├── UpdateChecker.cs             проверка последнего релиза на GitHub
 │   ├── VolumeControl.cs             системная громкость (Core Audio)
-│   ├── WheelHook.cs                 колесо мыши над виджетом (low-level hook)
+│   ├── RawWheel.cs                   колесо мыши над виджетом (Raw Input)
 │   ├── BundleRepair.cs              починка прав %TEMP%\.net после запуска от админа
-│   └── Log.cs                       debug.log рядом с exe
+│   └── Log.cs                       debug.log в папке настроек
 │
 ├── shots/                           скриншоты для README (только два)
 ├── spike/                           консольный зонд: что видит Windows в SMTC
@@ -137,7 +139,7 @@ build-release-assets.cmd
 
 ## Отладка
 
-Рядом с exe пишется `debug.log`: создание трея, результат продвижения значка,
+В папке настроек пишется `debug.log` (`%LOCALAPPDATA%\TrayTune`): создание трея, результат продвижения значка,
 `SetParent` с кодами ошибок, починка `%TEMP%\.net`. С него начинается любой
 разбор «не работает».
 

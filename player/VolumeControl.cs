@@ -70,7 +70,9 @@ internal static class VolumeControl
         }
         catch
         {
+            // Устройство могло смениться — в следующий раз попробуем заново.
             _volume = null;
+            _tried = false;
             return null;
         }
     }

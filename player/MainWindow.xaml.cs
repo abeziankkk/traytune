@@ -34,7 +34,7 @@ public partial class MainWindow : Window
 
     private WinForms.NotifyIcon? _tray;
     private WinForms.ContextMenuStrip? _trayMenu;
-    private WheelHook? _wheelHook;
+    private RawWheel? _wheelHook;
     private DispatcherTimer? _volumeOverlayTimer;
     private DateTime _volumeOverlayUntil;
     private string? _updateTag;
@@ -645,29 +645,37 @@ public partial class MainWindow : Window
     {
         if (_wheelHook is not null) return;
 
-        _wheelHook = new WheelHook(IsCursorOverWidget, OnWheelVolume);
-        Log.Write("wheel: хук колеса установлен");
+        if (!VolumeControl.Available)
+        {
+            Log.Write("wheel: управление громкостью недоступно");
+            return;
+        }
+
+        _wheelHook = new RawWheel(GetWidgetRect, OnWheelVolume);
+    }
+
+    /// <summary>Прямоугольник виджета в экранных координатах (для проверки курсора).</summary>
+    private RawWheel.Rect? GetWidgetRect()
+    {
+        try
+        {
+            var origin = PointToScreen(new Point(0, 0));
+            return new RawWheel.Rect(
+                (int)origin.X,
+                (int)origin.Y,
+                (int)(origin.X + ActualWidth),
+                (int)(origin.Y + ActualHeight));
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void RemoveWheelHook()
     {
         _wheelHook?.Dispose();
         _wheelHook = null;
-    }
-
-    /// <summary>Курсор в экранных координатах над окном виджета?</summary>
-    private bool IsCursorOverWidget(Point cursor)
-    {
-        try
-        {
-            var origin = PointToScreen(new Point(0, 0));
-            return cursor.X >= origin.X && cursor.X <= origin.X + ActualWidth
-                && cursor.Y >= origin.Y && cursor.Y <= origin.Y + ActualHeight;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     private void OnWheelVolume(int direction)
